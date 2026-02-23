@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -11,10 +11,30 @@ import {
   navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
-import { BookOpen, Users, Briefcase, GraduationCap, Menu, X } from "lucide-react";
+import { BookOpen, Users, Briefcase, GraduationCap, Menu, X, LogOut, User } from "lucide-react";
+import { useAuthStore } from "@/store/auth";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const { user, logout } = useAuthStore();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/");
+  };
+
+  const userInitials = user?.profile
+    ? `${user.profile.firstName[0]}${user.profile.lastName[0]}`
+    : user?.email?.[0]?.toUpperCase() || "U";
 
   return (
     <nav className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -93,12 +113,36 @@ const Navbar = () => {
           </NavigationMenu>
 
           <div className="flex items-center space-x-4">
-            <Link to="/login">
-              <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link to="/register">
-              <Button>Get Started</Button>
-            </Link>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">{userInitials}</AvatarFallback>
+                    </Avatar>
+                    <span className="font-medium">{user.profile?.firstName || user.email}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuItem className="text-sm text-muted-foreground" disabled>
+                    {user.email}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
+                    <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost">Sign In</Button>
+                </Link>
+                <Link to="/register">
+                  <Button>Get Started</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
@@ -121,12 +165,23 @@ const Navbar = () => {
           <Link to="/about" className="block text-lg font-medium" onClick={() => setIsOpen(false)}>About</Link>
           <hr />
           <div className="flex flex-col space-y-2">
-            <Button variant="outline" asChild>
-              <Link to="/login" onClick={() => setIsOpen(false)}>Sign In</Link>
-            </Button>
-            <Button asChild>
-              <Link to="/register" onClick={() => setIsOpen(false)}>Get Started</Link>
-            </Button>
+            {user ? (
+              <>
+                <div className="text-sm text-muted-foreground px-1">{user.email}</div>
+                <Button variant="destructive" onClick={() => { handleLogout(); setIsOpen(false); }}>
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" asChild>
+                  <Link to="/login" onClick={() => setIsOpen(false)}>Sign In</Link>
+                </Button>
+                <Button asChild>
+                  <Link to="/register" onClick={() => setIsOpen(false)}>Get Started</Link>
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}
