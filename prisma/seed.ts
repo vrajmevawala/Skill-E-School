@@ -1,10 +1,18 @@
-import { PrismaClient, Role } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+// Helper to replace Role enum since it's removed for SQLite
+const Role = {
+    ADMIN: "ADMIN",
+    TRAINER: "TRAINER",
+    FRANCHISE_PARTNER: "FRANCHISE_PARTNER",
+    STUDENT: "STUDENT"
+};
+
 async function main() {
-    const hashedPassword = await bcrypt.hash("password123", 12);
+    const hashedPassword = await bcrypt.hash("       ", 12);
 
     // 1. Create Admins
     const admin = await prisma.user.upsert({
@@ -14,6 +22,7 @@ async function main() {
             email: "admin@skille.com",
             password: hashedPassword,
             role: Role.ADMIN,
+            emailVerified: true,
             profile: {
                 create: { firstName: "System", lastName: "Admin" },
             },

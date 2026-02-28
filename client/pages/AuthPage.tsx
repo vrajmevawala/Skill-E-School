@@ -99,7 +99,13 @@ export default function AuthPage() {
                 setEmailForOtp(data.email);
                 navigate("/verify-otp", { state: { email: data.email } });
             } else {
-                navigate("/");
+                // Get the user from the store to check the role
+                const user = useAuthStore.getState().user;
+                if (user?.role === "ADMIN") {
+                    navigate("/admin");
+                } else {
+                    navigate("/");
+                }
                 toast({
                     title: "Welcome back!",
                     description: "You have successfully logged in.",
@@ -129,7 +135,12 @@ export default function AuthPage() {
         clearError();
         try {
             await verifyOtp(emailForOtp, code);
-            navigate("/");
+            const user = useAuthStore.getState().user;
+            if (user?.role === "ADMIN") {
+                navigate("/admin");
+            } else {
+                navigate("/");
+            }
             toast({
                 title: "Account Verified",
                 description: "Welcome to Skill E-School!",

@@ -97,8 +97,13 @@ const Navbar = () => {
                 <Link to="/franchise" className={navigationMenuTriggerStyle()}>
                   Franchise
                 </Link>
-              </NavigationMenuItem>
-              <NavigationMenuItem>
+              </NavigationMenuItem>              {user?.role === "ADMIN" && (
+                <NavigationMenuItem>
+                  <Link to="/admin" className={cn(navigationMenuTriggerStyle(), "text-primary font-bold")}>
+                    Admin Dashboard
+                  </Link>
+                </NavigationMenuItem>
+              )}              <NavigationMenuItem>
                 <Link to="/about" className={navigationMenuTriggerStyle()}>
                   About
                 </Link>

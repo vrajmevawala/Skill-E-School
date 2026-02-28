@@ -3,44 +3,19 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
-enum Role {
-  STUDENT
-  TRAINER
-  ADMIN
-  FRANCHISE_PARTNER
-}
-
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
-}
-
-enum BookingStatus {
-  SCHEDULED
-  COMPLETED
-  CANCELLED
-}
-
-enum InquiryStatus {
-  PENDING
-  REVIEWING
-  APPROVED
-  REJECTED
-}
-
-// --- Users & Profiles ---
+// --- Payments ---
 
 model User {
   id            String    @id @default(cuid())
   email         String    @unique
+  username      String?
   password      String
-  role          Role      @default(STUDENT)
+  role          String    @default("STUDENT")
+  status        String    @default("ACTIVE")
   emailVerified Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -96,7 +71,7 @@ model Course {
   description   String
   thumbnail     String?
   previewVideoUrl String?
-  price         Decimal         @default(0) @db.Decimal(10, 2)
+  price         Float           @default(0)
   isFree        Boolean         @default(false)
   level         String          @default("Beginner")
   categoryId    String
@@ -142,7 +117,7 @@ model Enrollment {
   courseId  String
   course    Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   enrolledAt DateTime @default(now())
-  status    PaymentStatus @default(COMPLETED)
+  status    String    @default("COMPLETED")
 
   @@unique([userId, courseId])
 }
@@ -168,8 +143,10 @@ model Webinar {
   duration      Int?      // Minutes
   meetingUrl    String?
   thumbnail     String?
+  instructor    String?
+  status        String    @default("UPCOMING")
   isFree        Boolean   @default(true)
-  price         Decimal?  @db.Decimal(10, 2)
+  price         Float?
   googleFormLink String?
   createdAt     DateTime  @default(now())
   
@@ -196,7 +173,7 @@ model Expert {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   specialization String
   rating         Float    @default(0)
-  hourlyRate     Decimal  @db.Decimal(10, 2)
+  hourlyRate     Float
   
   slots          AvailabilitySlot[]
   bookings       Booking[]
@@ -219,7 +196,7 @@ model Booking {
   expert    Expert        @relation(fields: [expertId], references: [id], onDelete: Cascade)
   startTime DateTime
   endTime   DateTime
-  status    BookingStatus @default(SCHEDULED)
+  status    String        @default("SCHEDULED")
   paymentId String?
   createdAt DateTime      @default(now())
 }
@@ -234,7 +211,7 @@ model FranchiseInquiry {
   phone        String
   city         String
   message      String?
-  status       InquiryStatus @default(PENDING)
+  status       String        @default("PENDING")
   createdAt    DateTime      @default(now())
 }
 
@@ -263,7 +240,7 @@ model Commission {
   id        String   @id @default(cuid())
   partnerId String
   partner   FranchisePartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
-  amount    Decimal  @db.Decimal(10, 2)
+  amount    Float
   source    String   // Description of source (e.g., "Course Sale - ID 123")
   createdAt DateTime @default(now())
 }
@@ -272,8 +249,8 @@ model Payout {
   id        String        @id @default(cuid())
   userId    String
   user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  amount    Decimal       @db.Decimal(10, 2)
-  status    PaymentStatus @default(PENDING)
+  amount    Float
+  status    String        @default("PENDING")
   paidAt    DateTime?
   createdAt DateTime      @default(now())
 }
@@ -282,12 +259,12 @@ model Payout {
 
 model Payment {
   id            String        @id @default(cuid())
-  amount        Decimal       @db.Decimal(10, 2)
+  amount        Float
   currency      String        @default("INR")
-  status        PaymentStatus @default(PENDING)
+  status        String        @default("PENDING")
   provider      String        // e.g., "Razorpay"
   providerId    String?       @unique // external ID
-  data          Json?         // raw provider response
+  data          String?       // raw provider response
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 }

@@ -52,4 +52,31 @@ export class AuthController {
     static logout(req: Request, res: Response) {
         return APIResponse.success(res, { message: "Logged out successfully" });
     }
+
+    static async getAll(req: Request, res: Response, next: NextFunction) {
+        try {
+            const users = await AuthService.getAllUsers();
+            return APIResponse.success(res, { users });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async update(req: Request, res: Response, next: NextFunction) {
+        try {
+            const user = await AuthService.updateUser(req.params.id, req.body);
+            return APIResponse.success(res, { user });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async delete(req: Request, res: Response, next: NextFunction) {
+        try {
+            await AuthService.deleteUser(req.params.id);
+            return APIResponse.success(res, { message: "User deleted successfully" });
+        } catch (error) {
+            next(error);
+        }
+    }
 }

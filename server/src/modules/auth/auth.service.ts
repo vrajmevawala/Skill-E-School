@@ -187,6 +187,37 @@ export class AuthService {
         return { id: user.id, email: user.email, role: user.role, emailVerified: user.emailVerified, profile: user.profile };
     }
 
+    static async getAllUsers() {
+        return prisma.user.findMany({
+            include: { profile: true },
+            orderBy: { createdAt: "desc" },
+        });
+    }
+
+    static async updateUser(id: string, data: any) {
+        return prisma.user.update({
+            where: { id },
+            data: {
+                role: data.role,
+                emailVerified: data.emailVerified,
+                profile: {
+                    update: {
+                        firstName: data.firstName,
+                        lastName: data.lastName,
+                        phoneNumber: data.phoneNumber,
+                    }
+                }
+            },
+            include: { profile: true },
+        });
+    }
+
+    static async deleteUser(id: string) {
+        return prisma.user.delete({
+            where: { id },
+        });
+    }
+
     private static generateToken(userId: string, role: string) {
         return jwt.sign({ id: userId, role }, JWT_SECRET, {
             expiresIn: JWT_EXPIRES_IN,

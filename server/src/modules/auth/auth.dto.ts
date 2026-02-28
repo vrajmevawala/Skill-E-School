@@ -1,12 +1,11 @@
-import { Role } from "@prisma/client";
-
+// Removed Role import because it's not in Prisma schema as Enum
 export interface RegisterDTO {
     email: string;
     password: string;
     firstName: string;
     lastName: string;
     phoneNumber?: string;
-    role?: Role;
+    role?: string;
 }
 
 export interface LoginDTO {

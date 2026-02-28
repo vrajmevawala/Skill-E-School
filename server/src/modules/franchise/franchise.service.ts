@@ -59,4 +59,25 @@ export class FranchiseService {
             orderBy: { createdAt: "desc" },
         });
     }
+
+    static async getAllInquiries() {
+        return prisma.franchiseInquiry.findMany({
+            orderBy: { createdAt: "desc" },
+        });
+    }
+
+    static async updateInquiryStatus(id: string, status: any) {
+        return prisma.franchiseInquiry.update({
+            where: { id },
+            data: { status },
+        });
+    }
+
+    static async getAllPartners() {
+        return prisma.franchisePartner.findMany({
+            include: {
+                user: { include: { profile: true } },
+            },
+        });
+    }
 }

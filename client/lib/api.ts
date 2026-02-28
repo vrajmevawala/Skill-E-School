@@ -5,7 +5,8 @@ interface ApiOptions extends RequestInit {
 }
 
 async function apiFetch<T = any>(endpoint: string, options: ApiOptions = {}): Promise<T> {
-    const { token, headers, ...rest } = options;
+    const { token: providedToken, headers, ...rest } = options;
+    const token = providedToken || localStorage.getItem("token");
 
     const res = await fetch(`${API_BASE}${endpoint}`, {
         headers: {
@@ -37,6 +38,9 @@ export const api = {
 
     put: <T = any>(endpoint: string, body: any, token?: string) =>
         apiFetch<T>(endpoint, { method: "PUT", body: JSON.stringify(body), token }),
+
+    patch: <T = any>(endpoint: string, body: any, token?: string) =>
+        apiFetch<T>(endpoint, { method: "PATCH", body: JSON.stringify(body), token }),
 
     delete: <T = any>(endpoint: string, token?: string) =>
         apiFetch<T>(endpoint, { method: "DELETE", token }),

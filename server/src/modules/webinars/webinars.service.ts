@@ -30,4 +30,39 @@ export class WebinarsService {
             },
         });
     }
+
+    static async createWebinar(data: any) {
+        return prisma.webinar.create({
+            data: {
+                title: data.title,
+                description: data.description,
+                scheduledAt: new Date(data.scheduledAt),
+                duration: data.duration,
+                isFree: data.isFree,
+                googleFormLink: data.googleFormLink,
+                status: data.status || "UPCOMING",
+            },
+        });
+    }
+
+    static async updateWebinar(id: string, data: any) {
+        return prisma.webinar.update({
+            where: { id },
+            data: {
+                title: data.title,
+                description: data.description,
+                scheduledAt: data.scheduledAt ? new Date(data.scheduledAt) : undefined,
+                duration: data.duration,
+                isFree: data.isFree,
+                googleFormLink: data.googleFormLink,
+                status: data.status,
+            },
+        });
+    }
+
+    static async deleteWebinar(id: string) {
+        return prisma.webinar.delete({
+            where: { id },
+        });
+    }
 }

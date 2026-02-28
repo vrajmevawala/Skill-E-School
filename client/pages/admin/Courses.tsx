@@ -10,12 +10,14 @@ import {
     Layers,
     BarChart,
     Video,
-    FileText
+    FileText,
+    RefreshCw
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
     Table,
     TableBody,
@@ -33,13 +35,17 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { CourseModal } from "@/components/admin/CourseModal";
+import { CourseCategoryModal } from "@/components/admin/CourseCategoryModal";
 
 interface CourseRecord {
     id: string;
     title: string;
+    description: string;
     price: number;
     level: string;
     isFree: boolean;
+    categoryId: string;
     category: { name: string };
     trainer: { profile: { firstName: string, lastName: string } | null };
     _count?: {
@@ -52,12 +58,21 @@ const AdminCourses = () => {
     const [courses, setCourses] = useState<CourseRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
+    const [isRefreshing, setIsRefreshing] = useState(false);
+    
+    // Modal states
+    const [isCourseModalOpen, setIsCourseModalOpen] = useState(false);
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+    const [selectedCourse, setSelectedCourse] = useState<any>(null);
 
     useEffect(() => {
         fetchCourses();
     }, []);
 
-    const fetchCourses = async () => {
+    const fetchCourses = async (silent = false) => {
+        if (!silent) setLoading(true);
+        else setIsRefreshing(true);
+        
         try {
             const res = await api.get("/courses");
             setCourses(res.courses || []);
@@ -65,7 +80,29 @@ const AdminCourses = () => {
             console.error(err);
         } finally {
             setLoading(false);
+            setIsRefreshing(false);
         }
+    };
+
+    const handleDelete = async (id: string) => {
+        if (!confirm("Are you sure you want to delete this course?")) return;
+        try {
+            await api.delete(`/courses/${id}`);
+            setCourses(courses.filter(c => c.id !== id));
+        } catch (err) {
+            console.error(err);
+            alert("Failed to delete course");
+        }
+    };
+
+    const openCreateModal = () => {
+        setSelectedCourse(null);
+        setIsCourseModalOpen(true);
+    };
+
+    const openEditModal = (course: CourseRecord) => {
+        setSelectedCourse(course);
+        setIsCourseModalOpen(true);
     };
 
     const filteredCourses = courses.filter(course =>
@@ -80,9 +117,27 @@ const AdminCourses = () => {
                     <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Course Management</h1>
                     <p className="text-sm text-zinc-500 font-medium mt-1">Create, edit, and organize your academy's curriculum.</p>
                 </div>
-                <Button className="h-11 rounded-xl font-bold shadow-lg shadow-primary/10">
-                    <Plus className="h-4 w-4 mr-2" /> Create New Course
-                </Button>
+                <div className="flex items-center gap-3">
+                    <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="h-11 w-11 rounded-xl border-zinc-200"
+                        onClick={() => fetchCourses(true)}
+                        disabled={isRefreshing || loading}
+                    >
+                        <RefreshCw className={cn("h-4 w-4 text-zinc-500", (isRefreshing || loading) && "animate-spin")} />
+                    </Button>
+                    <Button 
+                        variant="outline"
+                        className="h-11 rounded-xl font-bold border-zinc-200"
+                        onClick={() => setIsCategoryModalOpen(true)}
+                    >
+                        Add Category
+                    </Button>
+                    <Button className="h-11 rounded-xl font-bold shadow-lg shadow-primary/10" onClick={openCreateModal}>
+                        <Plus className="h-4 w-4 mr-2" /> Create New Course
+                    </Button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -93,7 +148,11 @@ const AdminCourses = () => {
                         </div>
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Published</p>
-                            <p className="text-xl font-bold">{courses.length}</p>
+                            {loading ? (
+                                <Skeleton className="h-7 w-12 mt-1 rounded-lg" />
+                            ) : (
+                                <p className="text-xl font-bold">{courses.length}</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -104,7 +163,13 @@ const AdminCourses = () => {
                         </div>
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Total Lessons</p>
-                            <p className="text-xl font-bold">124</p> {/* Mock aggregate */}
+                            {loading ? (
+                                <Skeleton className="h-7 w-12 mt-1 rounded-lg" />
+                            ) : (
+                                <p className="text-xl font-bold">
+                                    {courses.reduce((acc, curr) => acc + (curr._count?.lessons || 0), 0)}
+                                </p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -115,7 +180,13 @@ const AdminCourses = () => {
                         </div>
                         <div>
                             <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Enrollments</p>
-                            <p className="text-xl font-bold">856</p> {/* Mock aggregate */}
+                            {loading ? (
+                                <Skeleton className="h-7 w-12 mt-1 rounded-lg" />
+                            ) : (
+                                <p className="text-xl font-bold">
+                                    {courses.reduce((acc, curr) => acc + (curr._count?.enrollments || 0), 0)}
+                                </p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
@@ -146,12 +217,42 @@ const AdminCourses = () => {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {filteredCourses.map((course) => (
-                                    <TableRow key={course.id} className="border-zinc-100 hover:bg-zinc-50/50 transition-colors group">
+                                {loading ? (
+                                    Array.from({ length: 5 }).map((_, i) => (
+                                        <TableRow key={i} className="border-zinc-100">
+                                            <TableCell className="pl-8 py-5">
+                                                <div className="flex items-center gap-4">
+                                                    <Skeleton className="h-12 w-12 rounded-xl" />
+                                                    <div className="space-y-2">
+                                                        <Skeleton className="h-4 w-32" />
+                                                        <Skeleton className="h-3 w-20" />
+                                                    </div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell><Skeleton className="h-6 w-20" /></TableCell>
+                                            <TableCell><Skeleton className="h-10 w-24" /></TableCell>
+                                            <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                                            <TableCell className="pr-8 text-right"><Skeleton className="h-8 w-8 ml-auto rounded-lg" /></TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : filteredCourses.length === 0 ? (
+                                    <TableRow>
+                                        <TableCell colSpan={5} className="h-64 text-center">
+                                            <div className="flex flex-col items-center justify-center gap-3">
+                                                <div className="h-12 w-12 rounded-2xl bg-zinc-50 flex items-center justify-center">
+                                                    <Search className="h-6 w-6 text-zinc-300" />
+                                                </div>
+                                                <p className="text-sm font-bold text-zinc-500">No courses found</p>
+                                                <p className="text-xs text-zinc-400">Try adjusting your search query</p>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ) : (
+                                    filteredCourses.map((course) => (
+                                        <TableRow key={course.id} className="border-zinc-100 hover:bg-zinc-50/50 transition-colors group">
                                         <TableCell className="pl-8 py-5">
                                             <div className="flex items-center gap-4">
                                                 <div className="h-12 w-12 rounded-xl bg-zinc-100 overflow-hidden shrink-0 border border-zinc-200">
-                                                    {/* Add course thumbnail here if available */}
                                                     <div className="h-full w-full flex items-center justify-center">
                                                         <BookOpen className="h-5 w-5 text-zinc-400" />
                                                     </div>
@@ -161,7 +262,7 @@ const AdminCourses = () => {
                                                         {course.title}
                                                     </p>
                                                     <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">
-                                                        {course.level} • {course.trainer?.profile ? `${course.trainer.profile.firstName} ${course.trainer.profile.lastName}` : "No Instructor"}
+                                                        {course.level} � {course.trainer?.profile ? `${course.trainer.profile.firstName} ${course.trainer.profile.lastName}` : "No Instructor"}
                                                     </p>
                                                 </div>
                                             </div>
@@ -174,7 +275,7 @@ const AdminCourses = () => {
                                         <TableCell>
                                             <div>
                                                 <p className="text-sm font-bold text-zinc-900">
-                                                    {course.isFree ? "Free" : `₹${course.price}`}
+                                                    {course.isFree ? "Free" : `?${course.price}`}
                                                 </p>
                                                 <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-tighter">
                                                     Lifetime Access
@@ -189,7 +290,7 @@ const AdminCourses = () => {
                                                 </div>
                                                 <div className="flex items-center gap-1.5 tooltip" title="Resources">
                                                     <FileText className="h-3.5 w-3.5" />
-                                                    <span className="text-xs font-bold">0</span> {/* Add count if available */}
+                                                    <span className="text-xs font-bold">0</span>
                                                 </div>
                                             </div>
                                         </TableCell>
@@ -206,7 +307,7 @@ const AdminCourses = () => {
                                                         <Eye className="h-4 w-4 text-zinc-400" />
                                                         <span className="text-sm font-medium">View Public</span>
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="p-3 gap-3 cursor-pointer" onClick={() => alert("Editing course...")}>
+                                                    <DropdownMenuItem className="p-3 gap-3 cursor-pointer" onClick={() => openEditModal(course)}>
                                                         <Edit className="h-4 w-4 text-zinc-400" />
                                                         <span className="text-sm font-medium">Edit Details</span>
                                                     </DropdownMenuItem>
@@ -214,7 +315,7 @@ const AdminCourses = () => {
                                                         <Layers className="h-4 w-4 text-zinc-400" />
                                                         <span className="text-sm font-medium">Manage Content</span>
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="p-3 gap-3 cursor-pointer text-rose-600 hover:bg-rose-50" onClick={() => alert("Deleting course...")}>
+                                                    <DropdownMenuItem className="p-3 gap-3 cursor-pointer text-rose-600 hover:bg-rose-50" onClick={() => handleDelete(course.id)}>
                                                         <Trash2 className="h-4 w-4" />
                                                         <span className="text-sm font-medium">Delete Course</span>
                                                     </DropdownMenuItem>
@@ -222,12 +323,25 @@ const AdminCourses = () => {
                                             </DropdownMenu>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                ))
+                                )}
                             </TableBody>
                         </Table>
                     </div>
                 </CardContent>
             </Card>
+
+            <CourseModal
+                isOpen={isCourseModalOpen}
+                onClose={() => setIsCourseModalOpen(false)}
+                onSuccess={fetchCourses}
+                course={selectedCourse}
+            />
+            <CourseCategoryModal
+                isOpen={isCategoryModalOpen}
+                onClose={() => setIsCategoryModalOpen(false)}
+                onSuccess={fetchCourses}
+            />
         </div>
     );
 };

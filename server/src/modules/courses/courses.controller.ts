@@ -40,4 +40,40 @@ export class CoursesController {
             next(error);
         }
     }
+
+    static async create(req: Request, res: Response, next: NextFunction) {
+        try {
+            const course = await CoursesService.createCourse(req.body);
+            return APIResponse.success(res, { course }, 201);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async update(req: Request, res: Response, next: NextFunction) {
+        try {
+            const course = await CoursesService.updateCourse(req.params.id, req.body);
+            return APIResponse.success(res, { course });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async delete(req: Request, res: Response, next: NextFunction) {
+        try {
+            await CoursesService.deleteCourse(req.params.id);
+            return APIResponse.success(res, { message: "Course deleted successfully" });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async getCategories(req: Request, res: Response, next: NextFunction) {
+        try {
+            const categories = await CoursesService.getCategories();
+            return APIResponse.success(res, { categories });
+        } catch (error) {
+            next(error);
+        }
+    }
 }

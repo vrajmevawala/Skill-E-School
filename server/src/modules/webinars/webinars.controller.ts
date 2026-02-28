@@ -21,4 +21,31 @@ export class WebinarsController {
             next(error);
         }
     }
+
+    static async create(req: Request, res: Response, next: NextFunction) {
+        try {
+            const webinar = await WebinarsService.createWebinar(req.body);
+            return APIResponse.success(res, { webinar }, 201);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async update(req: Request, res: Response, next: NextFunction) {
+        try {
+            const webinar = await WebinarsService.updateWebinar(req.params.id, req.body);
+            return APIResponse.success(res, { webinar });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async delete(req: Request, res: Response, next: NextFunction) {
+        try {
+            await WebinarsService.deleteWebinar(req.params.id);
+            return APIResponse.success(res, { message: "Webinar deleted successfully" });
+        } catch (error) {
+            next(error);
+        }
+    }
 }

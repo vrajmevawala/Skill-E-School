@@ -41,4 +41,31 @@ export class FranchiseController {
             next(error);
         }
     }
+
+    static async getAllInquiries(req: Request, res: Response, next: NextFunction) {
+        try {
+            const inquiries = await FranchiseService.getAllInquiries();
+            return APIResponse.success(res, { inquiries });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async updateInquiry(req: Request, res: Response, next: NextFunction) {
+        try {
+            const inquiry = await FranchiseService.updateInquiryStatus(req.params.id, req.body.status);
+            return APIResponse.success(res, { inquiry });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async getAllPartners(req: Request, res: Response, next: NextFunction) {
+        try {
+            const partners = await FranchiseService.getAllPartners();
+            return APIResponse.success(res, { partners });
+        } catch (error) {
+            next(error);
+        }
+    }
 }

@@ -79,20 +79,20 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // In a real app, we'd have a specific dashboard stats endpoint
-        // For now, we mock it or aggregate from existing endpoints
         const fetchStats = async () => {
             try {
-                const [usersRes, coursesRes] = await Promise.all([
-                    Promise.resolve({}), // Placeholder for users stats
-                    api.get("/courses")
+                const [usersRes, coursesRes, webinarsRes, franchiseRes] = await Promise.all([
+                    api.get("/auth/users"),
+                    api.get("/courses"),
+                    api.get("/webinars"),
+                    api.get("/franchise/admin/partners")
                 ]);
-                // Mocking for demonstration since restricted endpoints might not exist yet
+
                 setStats({
-                    totalUsers: 1248,
-                    totalCourses: 42,
-                    totalWebinars: 8,
-                    activeFranchises: 12
+                    totalUsers: usersRes.users?.length || 0,
+                    totalCourses: coursesRes.courses?.length || 0,
+                    totalWebinars: webinarsRes.webinars?.length || 0,
+                    activeFranchises: franchiseRes.partners?.length || 0
                 });
             } catch (err) {
                 console.error(err);
