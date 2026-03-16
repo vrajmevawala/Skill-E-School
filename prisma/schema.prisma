@@ -1,0 +1,274 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+// --- Payments ---
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  username      String?
+  password      String
+  role          String    @default("STUDENT")
+  status        String    @default("ACTIVE")
+  emailVerified Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  profile       Profile?
+  enrollments   Enrollment[]
+  registrations WebinarRegistration[]
+  bookings      Booking[]
+  payments      Payment[]
+  
+  // Franchise relations
+  franchisePartner FranchisePartner?
+  payouts          Payout[]
+
+  // Trainer relations
+  coursesCreated   Course[] @relation("TrainerCourses")
+  expertProfile    Expert?
+}
+
+model Otp {
+  id        String   @id @default(cuid())
+  email     String
+  code      String
+  expiresAt DateTime
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([email, code])
+}
+
+model Profile {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName   String
+  lastName    String
+  phoneNumber String?
+  avatarUrl   String?
+  bio         String?
+  updatedAt   DateTime @updatedAt
+}
+
+// --- LMS / Courses ---
+
+model CourseCategory {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  courses Course[]
+}
+
+model Course {
+  id            String          @id @default(cuid())
+  title         String
+  description   String
+  thumbnail     String?
+  previewVideoUrl String?
+  price         Float           @default(0)
+  isFree        Boolean         @default(false)
+  level         String          @default("Beginner")
+  categoryId    String
+  category      CourseCategory  @relation(fields: [categoryId], references: [id])
+  trainerId     String
+  trainer       User            @relation("TrainerCourses", fields: [trainerId], references: [id])
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  lessons       Lesson[]
+  resources     CourseResource[]
+  enrollments   Enrollment[]
+}
+
+model Lesson {
+  id          String    @id @default(cuid())
+  courseId    String
+  course      Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  title       String
+  content     String?   // Can store markdown or HTML
+  videoUrl    String?
+  order       Int
+  duration    Int?      // In minutes
+  createdAt   DateTime  @default(now())
+  
+  progress    Progress[]
+}
+
+model CourseResource {
+  id        String   @id @default(cuid())
+  courseId  String
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  name      String
+  type      String   // e.g., "pdf", "zip"
+  url       String
+  isFree    Boolean  @default(false)
+}
+
+model Enrollment {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseId  String
+  course    Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  enrolledAt DateTime @default(now())
+  status    String    @default("COMPLETED") // COMPLETED, PENDING, FAILED
+  paymentId String?   @unique
+  payment   Payment?  @relation(fields: [paymentId], references: [id])
+
+  @@unique([userId, courseId])
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  amount        Float
+  currency      String   @default("INR")
+  status        String   @default("PENDING") // PENDING, SUCCESS, FAILED
+  provider      String   @default("STRIPE")
+  providerId    String?  @unique // Stripe PaymentIntent ID
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  enrollment    Enrollment?
+}
+
+model Progress {
+  id        String   @id @default(cuid())
+  userId    String
+  lessonId  String
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completed Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, lessonId])
+}
+
+// --- Webinars / Events ---
+
+model Webinar {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+  scheduledAt   DateTime
+  duration      Int?      // Minutes
+  meetingUrl    String?
+  thumbnail     String?
+  instructor    String?
+  status        String    @default("UPCOMING")
+  isFree        Boolean   @default(true)
+  price         Float?
+  googleFormLink String?
+  createdAt     DateTime  @default(now())
+  
+  registrations WebinarRegistration[]
+}
+
+model WebinarRegistration {
+  id        String   @id @default(cuid())
+  webinarId String
+  webinar   Webinar  @relation(fields: [webinarId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  registeredAt DateTime @default(now())
+  attended  Boolean  @default(false)
+
+  @@unique([userId, webinarId])
+}
+
+// --- Consultancy ---
+
+model Expert {
+  id             String   @id @default(cuid())
+  userId         String   @unique
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  specialization String
+  rating         Float    @default(0)
+  hourlyRate     Float
+  
+  slots          AvailabilitySlot[]
+  bookings       Booking[]
+}
+
+model AvailabilitySlot {
+  id        String   @id @default(cuid())
+  expertId  String
+  expert    Expert   @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  startTime DateTime
+  endTime   DateTime
+  isBooked  Boolean  @default(false)
+}
+
+model Booking {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expertId  String
+  expert    Expert        @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  startTime DateTime
+  endTime   DateTime
+  status    String        @default("SCHEDULED")
+  paymentId String?
+  createdAt DateTime      @default(now())
+}
+
+// --- Franchise Module ---
+
+model FranchiseInquiry {
+  id           String        @id @default(cuid())
+  firstName    String
+  lastName     String
+  email        String
+  phone        String
+  city         String
+  message      String?
+  status       String        @default("PENDING")
+  createdAt    DateTime      @default(now())
+}
+
+model FranchisePartner {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  territory String
+  joinedAt  DateTime @default(now())
+  
+  leads     FranchiseLead[]
+  commissions Commission[]
+}
+
+model FranchiseLead {
+  id        String   @id @default(cuid())
+  partnerId String
+  partner   FranchisePartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  name      String
+  email     String
+  status    String   @default("NEW")
+  createdAt DateTime @default(now())
+}
+
+model Commission {
+  id        String   @id @default(cuid())
+  partnerId String
+  partner   FranchisePartner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  amount    Float
+  source    String   // Description of source (e.g., "Course Sale - ID 123")
+  createdAt DateTime @default(now())
+}
+
+model Payout {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Float
+  status    String        @default("PENDING")
+  paidAt    DateTime?
+  createdAt DateTime      @default(now())
+}

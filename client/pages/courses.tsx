@@ -1,266 +1,267 @@
-import { useState } from "react";
-import { Search, Filter, PlayCircle, Lock, Download, FileText, CheckCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Search, Filter, PlayCircle, Lock, Download, FileText, CheckCircle, Loader2, User } from "lucide-react";
+import { courseService } from "@/services/course.service";
+import { useAuthStore } from "@/store/auth";
+import { cn } from "@/lib/utils";
+import { PaymentModal } from "@/components/PaymentModal";
+import { toast } from "sonner";
 
-// Mock Data for Courses
-const courses = [
-    {
-        id: 1,
-        title: "Complete Web Development Bootcamp",
-        instructor: "Dr. Sarah Johnson",
-        level: "Beginner",
-        price: 4999,
-        isFree: false,
-        thumbnail: "https://images.unsplash.com/photo-1587620962725-abab7fe55159?q=80&w=600&auto=format&fit=crop",
-        category: "Development",
-        description: "Master full-stack web development with React, Node.js, and modern tools.",
-        previewVideoUrl: "https://res.cloudinary.com/demo/video/upload/dog.mp4", // Cloudinary Demo Video
-        resources: [
-            { name: "Course Cheatsheet", type: "pdf", isFree: true },
-            { name: "Source Code", type: "zip", isFree: false }
-        ]
-    },
-    {
-        id: 2,
-        title: "Digital Marketing Masterclass",
-        instructor: "David Chen",
-        level: "Intermediate",
-        price: 0,
-        isFree: true,
-        thumbnail: "https://images.unsplash.com/photo-1533750516457-a7f992034fec?q=80&w=600&auto=format&fit=crop",
-        category: "Marketing",
-        description: "Learn SEO, Social Media, and Email Marketing strategies that work in 2024.",
-        previewVideoUrl: "https://res.cloudinary.com/dul7kmwyw/video/upload/v1770972164/file_example_MP4_480_1_5MG_yzbg7i.mp4",
-        resources: [
-            { name: "Marketing Templates", type: "docx", isFree: true }
-        ]
-    },
-    {
-        id: 3,
-        title: "Financial Planning for Entrepreneurs",
-        instructor: "Priya Patel",
-        level: "Advanced",
-        price: 2999,
-        isFree: false,
-        thumbnail: "https://images.unsplash.com/photo-1554224155-6726b3ff858f?q=80&w=600&auto=format&fit=crop",
-        category: "Business",
-        description: "Understand cash flow, valuation, and investment strategies for your startup.",
-        previewVideoUrl: "https://res.cloudinary.com/demo/video/upload/v1687518483/turtle_video.mp4",
-        resources: [
-            { name: "Financial Model XLS", type: "xlsx", isFree: false },
-            { name: "Investor Deck Guide", type: "pdf", isFree: true }
-        ]
-    }
-];
+interface CourseLesson {
+    id: string;
+    title: string;
+    videoUrl: string | null;
+    order: number;
+    isFree?: boolean;
+}
+
+interface CourseResource {
+    id: string;
+    name: string;
+    type: string;
+    url: string;
+    isFree: boolean;
+}
+
+interface Course {
+    id: string;
+    title: string;
+    description: string;
+    thumbnail: string | null;
+    previewVideoUrl: string | null;
+    price: number;
+    isFree: boolean;
+    level: string;
+    category: { id: string; name: string };
+    trainer: { profile: { firstName: string; lastName: string } | null };
+    lessons: CourseLesson[];
+    resources: CourseResource[];
+}
 
 export default function Courses() {
+    const navigate = useNavigate();
+    const { user, token } = useAuthStore();
+    const [courses, setCourses] = useState<Course[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [searchQuery, setSearchQuery] = useState("");
+    const [categories, setCategories] = useState<string[]>(["All"]);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
-    // Filter Logic
-    const filteredCourses = courses.filter(course => {
-        const matchesCategory = selectedCategory === "All" || course.category === selectedCategory;
-        const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesCategory && matchesSearch;
-    });
+    useEffect(() => {
+        fetchData();
+        if (user) {
+            fetchEnrollments();
+        }
+    }, [selectedCategory, searchQuery, user]);
 
-    const handlePayment = (courseTitle: string, amount: number) => {
-        // Mock Razorpay Integration
-        console.log(`Initiating Razorpay for ${courseTitle}: ₹${amount}`);
-        alert(`Redirecting to Razorpay for ₹${amount}... (Mock Payment)`);
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const params = new URLSearchParams();
+            if (selectedCategory !== "All") params.set("category", selectedCategory);
+            if (searchQuery) params.set("search", searchQuery);
+            const res = await courseService.getAll(params.toString());
+            setCourses(res.courses || []);
+
+            // Dynamic categories if not already fetched
+            if (categories.length === 1) {
+                const catsRes = await courseService.getCategories();
+                const cats = Array.isArray(catsRes) ? catsRes : (catsRes.categories || []);
+                const catNames = cats.map((c: any) => typeof c === 'string' ? c : c.name);
+                setCategories(["All", ...catNames]);
+            }
+        } catch (err) {
+            console.error("Failed to fetch courses", err);
+            setCourses([]);
+        } finally {
+            setLoading(false);
+        }
     };
+
+    const fetchEnrollments = async () => {
+        if (!token) return;
+        try {
+            const res = await courseService.getMyCourses();
+            // Check if res is an array or if it has an enrollments property
+            const enrollments = Array.isArray(res) ? res : (res.enrollments || []);
+            const enrolledIds = enrollments.map((enrollment: any) => enrollment.courseId);
+            setEnrolledCourseIds(enrolledIds);
+        } catch (err) {
+            console.error("Failed to fetch enrollments", err);
+        }
+    };
+
+    const handlePayment = async (course: Course) => {
+        if (!user) {
+            toast.error("Please login to enroll in courses.");
+            return;
+        }
+
+        if (course.isFree || course.price === 0) {
+            // Instant enrollment for free courses
+            try {
+                await courseService.enroll(course.id);
+                toast.success("Successfully enrolled!");
+                fetchEnrollments();
+            } catch (err: any) {
+                toast.error(err.message || "Enrollment failed");
+            }
+            return;
+        }
+
+        setSelectedCourse(course);
+        setIsPaymentModalOpen(true);
+    };
+
+    const getInstructorName = (course: Course) => {
+        if (course.trainer?.profile) {
+            return `${course.trainer.profile.firstName} ${course.trainer.profile.lastName}`;
+        }
+        return "Instructor";
+    };
+
+    const isEnrolled = (courseId: string) => enrolledCourseIds.includes(courseId);
 
     return (
         <div className="min-h-screen bg-background pb-20">
-            {/* Header */}
+            {/* Hero Section */}
             <div className="bg-primary/5 py-12">
-                <div className="container px-4 mx-auto">
-                    <h1 className="text-4xl font-bold mb-4">Explore Our Courses</h1>
-                    <p className="text-muted-foreground text-lg max-w-2xl mb-8">
+                <div className="container px-4 mx-auto text-center">
+                    <h1 className="text-4xl font-bold mb-4 tracking-tight text-gray-900">Explore Our Courses</h1>
+                    <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-8">
                         Upgrade your skills with our premium courses designed by industry experts.
                     </p>
 
-                    <div className="flex flex-col md:flex-row gap-4 max-w-xl">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                            <Input
+                    <div className="flex justify-center">
+                        <div className="relative w-full max-w-xl">
+                            <Search className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
+                            <input
                                 placeholder="Search courses..."
-                                className="pl-10 bg-background"
+                                className="w-full bg-white rounded-xl pl-12 pr-4 py-3 text-gray-900 shadow-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-gray-400 transition-all"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
-                        <Button>Search</Button>
                     </div>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="container px-4 mx-auto mt-12 grid grid-cols-1 lg:grid-cols-4 gap-8">
-                {/* Sidebar Filters */}
-                <div className="lg:col-span-1 space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Filter className="h-5 w-5" /> Filters
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div>
-                                <h3 className="font-semibold mb-2">Category</h3>
-                                <div className="flex flex-col gap-2">
-                                    {["All", "Development", "Marketing", "Business", "Design"].map(cat => (
-                                        <div key={cat} className="flex items-center space-x-2">
-                                            <input
-                                                type="radio"
-                                                id={cat}
-                                                name="category"
-                                                checked={selectedCategory === cat}
-                                                onChange={() => setSelectedCategory(cat)}
-                                                className="accent-primary"
-                                            />
-                                            <label htmlFor={cat} className="text-sm cursor-pointer">{cat}</label>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+            {/* Category Pills */}
+            <div className="bg-white border-b border-gray-200 sticky top-16 z-10 py-3">
+                <div className="container px-4 mx-auto flex gap-2 overflow-x-auto scrollbar-thin">
+                    {categories.map(cat => (
+                        <button
+                            key={cat}
+                            onClick={() => setSelectedCategory(cat)}
+                            className={cn(
+                                "px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors cursor-pointer",
+                                selectedCategory === cat
+                                    ? "bg-primary text-white shadow-sm"
+                                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            )}
+                        >
+                            {cat}
+                        </button>
+                    ))}
                 </div>
+            </div>
 
-                {/* Course Grid */}
-                <div className="lg:col-span-3">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {filteredCourses.map(course => (
-                            <Card key={course.id} className="flex flex-col hover:shadow-lg transition-shadow">
-                                <div className="relative aspect-video overflow-hidden rounded-t-xl group">
+            {/* Course Grid */}
+            <div className="container px-4 mx-auto py-12">
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        <p className="text-muted-foreground font-medium">Loading courses...</p>
+                    </div>
+                ) : courses.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        {courses.map(course => (
+                            <div key={course.id} className="bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border-none flex flex-col group">
+                                {/* Thumbnail */}
+                                <div className="relative aspect-video overflow-hidden">
                                     <img
-                                        src={course.thumbnail}
+                                        src={course.thumbnail || "https://images.unsplash.com/photo-1587620962725-abab7fe55159?q=80&w=600&auto=format&fit=crop"}
                                         alt={course.title}
                                         className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
                                     />
-                                    <div className="absolute top-2 right-2">
-                                        <Badge variant={course.isFree ? "secondary" : "default"}>
-                                            {course.isFree ? "Free" : `₹${course.price}`}
-                                        </Badge>
+                                    <div className="absolute top-3 left-3">
+                                        <span className="bg-primary text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full">
+                                            {course.category?.name || "Premium"}
+                                        </span>
                                     </div>
+                                    {!course.isFree && (
+                                        <div className="absolute top-3 right-3">
+                                            <span className="bg-white/90 backdrop-blur-sm text-primary text-xs font-bold px-2 rounded-lg py-1 shadow-sm">
+                                                ₹{course.price}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {course.isFree && (
+                                        <div className="absolute top-3 right-3">
+                                            <span className="bg-emerald-500 text-white text-xs font-bold px-2 rounded-lg py-1 shadow-sm">
+                                                FREE
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
-                                <CardHeader>
-                                    <div className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">{course.category}</div>
-                                    <CardTitle className="line-clamp-2">{course.title}</CardTitle>
-                                    <CardDescription>By {course.instructor}</CardDescription>
-                                </CardHeader>
-                                <CardContent className="flex-1">
-                                    <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-                                        {course.description}
-                                    </p>
-                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                        <span className="flex items-center gap-1"><PlayCircle className="h-4 w-4" /> 12 Lessons</span>
-                                        <span className="flex items-center gap-1"><FileText className="h-4 w-4" /> {course.resources.length} Resources</span>
+
+                                {/* Card Body */}
+                                <div className="p-6 flex-1 flex flex-col">
+                                    <div className="text-xs font-semibold text-primary uppercase tracking-wider mb-2">Self-Paced Course</div>
+                                    <h3 className="text-lg font-bold text-gray-900 line-clamp-2 mb-2 group-hover:text-primary transition-colors">{course.title}</h3>
+                                    
+                                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                                        <User className="h-4 w-4" /> 
+                                        <span>{getInstructorName(course)}</span>
                                     </div>
-                                </CardContent>
-                                <CardFooter className="pt-0">
-                                    <Dialog>
-                                        <DialogTrigger asChild>
-                                            <Button className="w-full">
-                                                {course.isFree ? "Start Learning" : "Enroll Now"}
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="max-w-3xl">
-                                            <DialogHeader>
-                                                <DialogTitle>{course.title}</DialogTitle>
-                                                <DialogDescription>
-                                                    Instructor: {course.instructor} • Level: {course.level}
-                                                </DialogDescription>
-                                            </DialogHeader>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-                                                <div className="md:col-span-2 space-y-4">
-                                                    {/* Cloudinary Player Embed */}
-                                                    <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-lg relative">
-                                                        {course.isFree || course.price === 0 ? (
-                                                            <video
-                                                                controls
-                                                                className="w-full h-full object-contain"
-                                                                src={course.previewVideoUrl}
-                                                                poster={course.thumbnail}
-                                                            >
-                                                                Your browser does not support the video tag.
-                                                            </video>
-                                                        ) : (
-                                                            <div className="w-full h-full flex flex-col items-center justify-center text-white bg-slate-900 p-6 text-center">
-                                                                <Lock className="h-12 w-12 mb-4 text-muted-foreground" />
-                                                                <p className="text-lg font-semibold">Premium Content</p>
-                                                                <p className="text-sm text-gray-400 mb-4">Purchase this course to unlock full HD video access.</p>
-                                                                <Button onClick={() => handlePayment(course.title, course.price)} className="bg-primary hover:bg-primary/90 text-white">
-                                                                    Unlock for ₹{course.price}
-                                                                </Button>
-                                                            </div>
-                                                        )}
-                                                    </div>
+                                    <div className="flex items-center gap-4 text-sm text-muted-foreground mt-auto mb-6">
+                                        <span className="flex items-center gap-1.5"><PlayCircle className="h-4 w-4" /> {course.lessons?.length || 0} Lessons</span>
+                                        <span className="flex items-center gap-1.5"><FileText className="h-4 w-4" /> {course.resources?.length || 0} Resources</span>
+                                    </div>
 
-                                                    <div className="space-y-2">
-                                                        <h3 className="font-semibold text-lg">About this Course</h3>
-                                                        <p className="text-muted-foreground">{course.description}</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-6">
-                                                    <div className="border rounded-lg p-4">
-                                                        <h3 className="font-semibold mb-3 flex items-center gap-2">
-                                                            <FileText className="h-4 w-4" /> Course Resources
-                                                        </h3>
-                                                        <ul className="space-y-3">
-                                                            {course.resources.map((resource, idx) => (
-                                                                <li key={idx} className="flex items-center justify-between text-sm">
-                                                                    <div className="flex items-center gap-2 flex-1">
-                                                                        <span className="text-sm">{resource.name}</span>
-                                                                        <Badge variant="outline" className="text-[10px] uppercase shrink-0">{resource.type}</Badge>
-                                                                    </div>
-                                                                    {resource.isFree || course.isFree ? (
-                                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600">
-                                                                            <Download className="h-4 w-4" />
-                                                                        </Button>
-                                                                    ) : (
-                                                                        <Lock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                                                                    )}
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-
-                                                    {!course.isFree && (
-                                                        <Card className="bg-primary/5 border-primary/20">
-                                                            <CardContent className="pt-6 text-center space-y-4">
-                                                                <div className="text-2xl font-bold text-primary">₹{course.price}</div>
-                                                                <Button className="w-full w-full" onClick={() => handlePayment(course.title, course.price)}>
-                                                                    Buy Now with Razorpay
-                                                                </Button>
-                                                                <p className="text-xs text-muted-foreground">Secure payment via UPI, Card, or Netbanking</p>
-                                                            </CardContent>
-                                                        </Card>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </DialogContent>
-                                    </Dialog>
-                                </CardFooter>
-                            </Card>
+                                    {/* CTA Button */}
+                                    <button
+                                        onClick={() => navigate(`/courses/${course.id}`)}
+                                        className="w-full bg-primary hover:bg-primary-dark text-white font-bold rounded-xl px-5 py-3 transition-all cursor-pointer shadow-md hover:shadow-lg active:scale-95"
+                                    >
+                                        {isEnrolled(course.id) ? "Continue Learning" : "View Course Details"}
+                                    </button>
+                                </div>
+                            </div>
                         ))}
                     </div>
-
-                    {filteredCourses.length === 0 && (
-                        <div className="text-center py-20 text-muted-foreground">
-                            No courses found matching your criteria.
+                ) : (
+                    <div className="text-center py-20 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                        <div className="h-20 w-20 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                            <Search className="h-10 w-10 text-gray-300" />
                         </div>
-                    )}
-                </div>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2">No courses found</h3>
+                        <p className="text-muted-foreground max-w-xs mx-auto mb-8">We couldn't find any courses matching your search or filters.</p>
+                        <button
+                            className="bg-primary/10 text-primary font-bold px-6 py-2 rounded-full hover:bg-primary/20 transition-colors cursor-pointer"
+                            onClick={() => {
+                                setSelectedCategory("All");
+                                setSearchQuery("");
+                            }}
+                        >
+                            Reset Filters
+                        </button>
+                    </div>
+                )}
             </div>
+
+            <PaymentModal
+                open={isPaymentModalOpen}
+                onOpenChange={setIsPaymentModalOpen}
+                course={selectedCourse}
+                onSuccess={() => {
+                    fetchEnrollments();
+                }}
+            />
         </div>
     );
 }

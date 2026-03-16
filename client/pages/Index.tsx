@@ -13,11 +13,45 @@ import {
   Globe, 
   Zap,
   ShieldCheck,
-  TrendingUp
+  TrendingUp,
+  Loader2
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { courseService } from "@/services/course.service";
+import { webinarService } from "@/services/webinar.service";
+import { useAuthStore } from "@/store/auth";
 
 export default function Index() {
+  const [featuredCourses, setFeaturedCourses] = useState<any[]>([]);
+  const [highlightWebinar, setHighlightWebinar] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = !!user;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [coursesRes, webinarsRes] = await Promise.all([
+          courseService.getAll("limit=4"),
+          webinarService.getAll()
+        ]);
+        
+        setFeaturedCourses(coursesRes.courses || []);
+        if (webinarsRes.webinars && webinarsRes.webinars.length > 0) {
+          // Find the soonest upcoming webinar
+          const upcoming = webinarsRes.webinars.filter((w: any) => new Date(w.date) > new Date());
+          setHighlightWebinar(upcoming[0] || webinarsRes.webinars[0]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch landing page data", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
   return (
     <div className="flex flex-col w-full">
       {/* Hero Section */}
@@ -46,11 +80,13 @@ export default function Index() {
                 A comprehensive platform for modern learners and aspiring entrepreneurs. Master new skills, attend live webinars, and manage your own education franchise.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto">
-                  <Link to="/login">Start Learning Now</Link>
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                <Button size="lg" className="text-lg px-8 py-6 h-auto" asChild>
+                  <Link to={isAuthenticated ? "/courses" : "/login?course=true"}>
+                    Start Learning Now
+                    <ArrowRight className="ml-2 h-5 w-5 inline-block" />
+                  </Link>
                 </Button>
-                <Button size="lg" variant="outline" className="text-lg px-8 py-6 h-auto">
+                <Button size="lg" variant="outline" className="text-lg px-8 py-6 h-auto" asChild>
                   <Link to="/franchise">Explore Franchise Opps</Link>
                 </Button>
               </div>
@@ -62,11 +98,11 @@ export default function Index() {
                     </div>
                   ))}
                   <div className="w-10 h-10 rounded-full border-2 border-white bg-primary flex items-center justify-center text-[10px] text-white font-bold">
-                    +2k
+                    +99
                   </div>
                 </div>
                 <p className="text-sm text-slate-500 font-medium">
-                  Joined by 2,000+ students & 50+ franchisees
+                  Joined by 100+ students 
                 </p>
               </div>
             </div>
@@ -77,17 +113,23 @@ export default function Index() {
                   alt="Learning together" 
                   className="w-full h-auto"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-8">
-                  <div className="flex items-center gap-4 text-white">
-                    <div className="bg-primary p-3 rounded-full">
-                      <Video className="h-6 w-6" />
-                    </div>
-                    <div>
-                      <p className="font-semibold">Live Webinar: UI/UX Masterclass</p>
-                      <p className="text-sm text-white/80">Starting in 45 minutes • 240+ registered</p>
+                {highlightWebinar && (
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-8">
+                    <div className="flex items-center gap-4 text-white">
+                      <div className="bg-primary p-3 rounded-full">
+                        <Video className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="font-semibold">Live Webinar: {highlightWebinar.title}</p>
+                        <p className="text-sm text-white/80">
+                          {new Date(highlightWebinar.date) > new Date() 
+                            ? `Scheduled for ${new Date(highlightWebinar.date).toLocaleDateString()}` 
+                            : "Available on-demand"}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
               {/* Decorative elements */}
               <div className="absolute -top-6 -right-6 w-32 h-32 bg-secondary rounded-full blur-3xl opacity-30 animate-pulse"></div>
@@ -102,17 +144,13 @@ export default function Index() {
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
             <div className="text-center space-y-2">
-              <p className="text-3xl md:text-4xl font-bold text-primary">500+</p>
+              <p className="text-3xl md:text-4xl font-bold text-primary">10+</p>
               <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Courses</p>
             </div>
             <div className="text-center space-y-2">
-              <p className="text-3xl md:text-4xl font-bold text-primary">1k+</p>
+              <p className="text-3xl md:text-4xl font-bold text-primary">100+</p>
               <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Students</p>
             </div>
-            {/* <div className="text-center space-y-2">
-              <p className="text-3xl md:text-4xl font-bold text-primary">80+</p>
-              <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Franchises</p>
-            </div> */}
             <div className="text-center space-y-2">
               <p className="text-3xl md:text-4xl font-bold text-primary">95%</p>
               <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">Success Rate</p>
@@ -202,69 +240,54 @@ export default function Index() {
                 Start your journey with our most popular skill-building programs.
               </p>
             </div>
-            <Button variant="ghost" className="hidden md:flex">
-              View All Courses <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <Link to="/courses">
+              <Button variant="ghost" className="hidden md:flex">
+                View All Courses <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                title: "Full-Stack Web Dev",
-                instructor: "Alex Rivers",
-                price: "$199",
-                rating: "4.9",
-                image: "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=600",
-                badge: "Bestseller"
-              },
-              {
-                title: "Digital Marketing Pro",
-                instructor: "Sarah Chen",
-                price: "$149",
-                rating: "4.8",
-                image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&q=80&w=600",
-                badge: "Hot"
-              },
-              {
-                title: "Data Science with Python",
-                instructor: "Dr. James Wilson",
-                price: "$249",
-                rating: "4.9",
-                image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&q=80&w=600",
-                badge: "Advanced"
-              },
-              {
-                title: "UI/UX Design Master",
-                instructor: "Emma Watson",
-                price: "$179",
-                rating: "4.7",
-                image: "https://images.unsplash.com/photo-1561070791-2526d30994b5?auto=format&fit=crop&q=80&w=600",
-                badge: "New"
-              }
-            ].map((course, idx) => (
-              <Card key={idx} className="overflow-hidden group">
-                <div className="relative h-48 overflow-hidden">
-                  <img 
-                    src={course.image} 
-                    alt={course.title} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                  />
-                  <Badge className="absolute top-4 left-4 bg-white/90 text-primary hover:bg-white">{course.badge}</Badge>
-                </div>
-                <CardHeader className="p-4">
-                  <CardTitle className="text-lg">{course.title}</CardTitle>
-                  <CardDescription>By {course.instructor}</CardDescription>
-                </CardHeader>
-                <CardFooter className="p-4 pt-0 flex justify-between items-center">
-                  <span className="font-bold text-lg text-primary">{course.price}</span>
-                  <div className="flex items-center gap-1 text-sm font-medium text-slate-500">
-                    <TrendingUp className="h-4 w-4 text-green-500" />
-                    <span>{course.rating}</span>
-                  </div>
-                </CardFooter>
-              </Card>
-            ))}
-          </div>
+          {loading ? (
+            <div className="flex justify-center items-center py-20">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : featuredCourses.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {featuredCourses.map((course, idx) => (
+                <Link key={course.id} to={`/courses/${course.id}`}>
+                  <Card className="overflow-hidden group h-full hover:shadow-lg transition-all cursor-pointer">
+                    <div className="relative h-48 overflow-hidden">
+                      <img 
+                        src={course.thumbnail || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=600"} 
+                        alt={course.title} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <Badge className="absolute top-4 left-4 bg-white/90 text-primary hover:bg-white">
+                        {course.category?.name || "Premium"}
+                      </Badge>
+                    </div>
+                    <CardHeader className="p-4">
+                      <CardTitle className="text-lg line-clamp-1">{course.title}</CardTitle>
+                      <CardDescription>
+                        By {course.trainer?.profile ? `${course.trainer.profile.firstName} ${course.trainer.profile.lastName}` : "Expert Instructor"}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardFooter className="p-4 pt-0 flex justify-between items-center mt-auto">
+                      <span className="font-bold text-lg text-primary">{course.isFree ? "FREE" : `₹${course.price}`}</span>
+                      <div className="flex items-center gap-1 text-sm font-medium text-slate-500">
+                        <TrendingUp className="h-4 w-4 text-green-500" />
+                        <span>{course.level}</span>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed border-slate-300">
+              <p className="text-slate-500">No courses available at the moment.</p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -281,7 +304,7 @@ export default function Index() {
                 Empower Your Community as a <span className="text-primary">Franchise Partner</span>
               </h2>
               <p className="text-lg text-slate-300">
-                Join our network of 80+ successful franchises. We provide the technology, content, and leads while you manage local growth and mentoring.
+                Join our network of successful franchises. We provide the technology, content, and leads while you manage local growth and mentoring.
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div className="flex items-start gap-4">
@@ -338,7 +361,7 @@ export default function Index() {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-white/5 p-4 rounded-xl border border-white/10">
                       <p className="text-xs text-slate-400 uppercase">Monthly Earnings</p>
-                      <p className="text-2xl font-bold mt-1">$4,250</p>
+                      <p className="text-2xl font-bold mt-1">₹45,250</p>
                       <p className="text-[10px] text-green-400 mt-1">+12% from last month</p>
                     </div>
                     <div className="bg-white/5 p-4 rounded-xl border border-white/10">

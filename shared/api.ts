@@ -10,3 +10,35 @@
 export interface DemoResponse {
   message: string;
 }
+
+/**
+ * Payment intent response - from create-payment-intent endpoint
+ */
+export interface PaymentIntentResponse {
+  paymentId: string;
+  clientSecret: string;
+  publishableKey: string;
+}
+
+/**
+ * Payment verification response - checks if payment is completed
+ */
+export interface PaymentVerificationResponse {
+  paymentId: string;
+  status: "PENDING" | "SUCCESS" | "FAILED";
+  enrollmentId?: string;
+  message: string;
+  success: boolean;
+}
+
+/**
+ * Course access response - indicates if user can access course content
+ */
+export interface CourseAccessResponse {
+  courseId: string;
+  isEnrolled: boolean;
+  enrollmentStatus: "COMPLETED" | "PENDING" | "FAILED" | null;
+  canAccessContent: boolean;
+  lessons?: any[];
+  resources?: any[];
+}

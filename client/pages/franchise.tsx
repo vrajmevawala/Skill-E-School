@@ -1,11 +1,42 @@
-import { Building2, TrendingUp, Users, CheckCircle, ArrowRight, ClipboardList } from "lucide-react";
+import { useState } from "react";
+import { Building2, TrendingUp, Users, CheckCircle, ArrowRight, ClipboardList, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { franchiseService } from "@/services/franchise.service";
+import { toast } from "sonner";
 
 export default function Franchise() {
+    const [form, setForm] = useState({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        city: "",
+        message: "",
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+
+    const update = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
+        setForm((prev) => ({ ...prev, [field]: e.target.value }));
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSubmitting(true);
+        try {
+            await franchiseService.createInquiry(form);
+            setSubmitted(true);
+            toast.success("Inquiry submitted successfully!");
+        } catch (err: any) {
+            toast.error(err.message || "Failed to submit inquiry. Please try again.");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
     const benefits = [
         {
             icon: <TrendingUp className="w-10 h-10 text-blue-600" />,
@@ -144,37 +175,45 @@ export default function Franchise() {
                                 <CardTitle>Franchise Inquiry Form</CardTitle>
                             </CardHeader>
                             <CardContent>
-                                <form className="space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="firstName">First Name</Label>
-                                            <Input id="firstName" placeholder="John" />
+                                {submitted ? (
+                                    <div className="text-center py-8 space-y-4">
+                                        <CheckCircle className="w-16 h-16 text-green-600 mx-auto" />
+                                        <h3 className="text-xl font-bold">Application Submitted!</h3>
+                                        <p className="text-muted-foreground">Our franchise development team will contact you within 24 hours.</p>
+                                    </div>
+                                ) : (
+                                    <form className="space-y-4" onSubmit={handleSubmit}>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="firstName">First Name</Label>
+                                                <Input id="firstName" placeholder="John" value={form.firstName} onChange={update("firstName")} required />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="lastName">Last Name</Label>
+                                                <Input id="lastName" placeholder="Doe" value={form.lastName} onChange={update("lastName")} required />
+                                            </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="lastName">Last Name</Label>
-                                            <Input id="lastName" placeholder="Doe" />
+                                            <Label htmlFor="email">Email</Label>
+                                            <Input id="email" type="email" placeholder="john@example.com" value={form.email} onChange={update("email")} required />
                                         </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email">Email</Label>
-                                        <Input id="email" type="email" placeholder="john@example.com" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="phone">Phone Number</Label>
-                                        <Input id="phone" type="tel" placeholder="+91 98765 43210" />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="city">Proposed City</Label>
-                                        <Input id="city" placeholder="Mumbai, Bangalore, etc." />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="message">Message (Optional)</Label>
-                                        <Textarea id="message" placeholder="Tell us about your background..." />
-                                    </div>
-                                    <Button type="submit" className="w-full text-lg py-6">
-                                        Submit Application
-                                    </Button>
-                                </form>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="phone">Phone Number</Label>
+                                            <Input id="phone" type="tel" placeholder="+91 98765 43210" value={form.phone} onChange={update("phone")} required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="city">Proposed City</Label>
+                                            <Input id="city" placeholder="Mumbai, Bangalore, etc." value={form.city} onChange={update("city")} required />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="message">Message (Optional)</Label>
+                                            <Textarea id="message" placeholder="Tell us about your background..." value={form.message} onChange={update("message")} />
+                                        </div>
+                                        <Button type="submit" className="w-full text-lg py-6" disabled={isSubmitting}>
+                                            {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Submitting...</> : "Submit Application"}
+                                        </Button>
+                                    </form>
+                                )}
                             </CardContent>
                         </Card>
                     </div>
