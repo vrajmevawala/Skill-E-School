@@ -36,9 +36,9 @@ const AdminLayout = () => {
             <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-zinc-200 sticky top-0 h-screen">
                 <div className="p-8">
                     <Link to="/" className="flex items-center gap-2">
-                        <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+                        {/* <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
                             <span className="text-white font-bold text-xl">S</span>
-                        </div>
+                        </div> */}
                         <span className="text-xl font-bold tracking-tight">Admin<span className="text-primary">Panel</span></span>
                     </Link>
                 </div>

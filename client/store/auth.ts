@@ -33,13 +33,23 @@ interface AuthState {
     fetchMe: () => Promise<void>;
     clearError: () => void;
     initialize: () => Promise<void>;
+    setUser: (user: User | null) => void;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
-    user: null,
+    user: JSON.parse(localStorage.getItem("user") || "null"),
     token: localStorage.getItem("token"),
-    isLoading: false,
+    isLoading: !!localStorage.getItem("token"), // Start as loading if we have a token to verify
     error: null,
+
+    setUser: (user) => {
+        if (user) {
+            localStorage.setItem("user", JSON.stringify(user));
+        } else {
+            localStorage.removeItem("user");
+        }
+        set({ user });
+    },
 
     register: async (data) => {
         set({ isLoading: true, error: null });
@@ -59,6 +69,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const res = await api.post("/auth/verify-otp", { email, code });
             const { user, token } = res;
             localStorage.setItem("token", token);
+            localStorage.setItem("user", JSON.stringify(user));
             set({ user, token, isLoading: false });
         } catch (err: any) {
             set({ isLoading: false, error: err.message });
@@ -83,6 +94,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const res = await api.post("/auth/login", { email, password });
             const { user, token } = res;
             localStorage.setItem("token", token);
+            localStorage.setItem("user", JSON.stringify(user));
             set({ user, token, isLoading: false });
             return { needsOtp: false, email };
         } catch (err: any) {
@@ -98,18 +110,25 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     logout: () => {
         localStorage.removeItem("token");
+        localStorage.removeItem("user");
         set({ user: null, token: null });
     },
 
     fetchMe: async () => {
         const token = localStorage.getItem("token");
-        if (!token) return;
-        set({ isLoading: true, token });
+        if (!token) {
+            set({ isLoading: false });
+            return;
+        }
+        set({ isLoading: true });
         try {
             const res = await api.get("/auth/me");
-            set({ user: res.user, isLoading: false });
-        } catch {
+            localStorage.setItem("user", JSON.stringify(res.user));
+            set({ user: res.user, token, isLoading: false });
+        } catch (err: any) {
+            console.error("Fetch me failed:", err);
             localStorage.removeItem("token");
+            localStorage.removeItem("user");
             set({ user: null, token: null, isLoading: false });
         }
     },
@@ -119,8 +138,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     initialize: async () => {
         const token = localStorage.getItem("token");
         if (token) {
+            // Immediately set token to allow api calls to include it
             set({ token });
             await get().fetchMe();
+        } else {
+            set({ isLoading: false });
         }
     },
 }));

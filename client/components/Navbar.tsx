@@ -11,7 +11,7 @@ import {
   navigationMenuTriggerStyle
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
-import { BookOpen, Users, Briefcase, GraduationCap, Menu, X, LogOut, User } from "lucide-react";
+import { BookOpen, Users, Briefcase, GraduationCap, Menu, X, LogOut, User, LayoutDashboard } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import {
   DropdownMenu,
@@ -128,13 +128,34 @@ const Navbar = () => {
                     <span className="font-medium">{user.profile?.firstName || user.email}</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem className="text-sm text-muted-foreground" disabled>
-                    {user.email}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout} className="text-red-600 cursor-pointer">
-                    <LogOut className="mr-2 h-4 w-4" /> Sign Out
+                <DropdownMenuContent align="end" className="w-56 p-2 rounded-xl border-zinc-200">
+                  <div className="px-2 py-3 mb-1">
+                    <p className="text-sm font-bold text-zinc-900 leading-none mb-1">
+                      {user.profile?.firstName} {user.profile?.lastName}
+                    </p>
+                    <p className="text-xs font-medium text-zinc-500 leading-none">{user.email}</p>
+                  </div>
+                  <DropdownMenuSeparator className="bg-zinc-100" />
+                  
+                  {user.role === "STUDENT" && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/profile" className="flex items-center gap-2 cursor-pointer py-2.5 rounded-lg font-medium text-zinc-600 hover:text-primary transition-colors">
+                        <User className="h-4 w-4" /> Profile Details
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+
+                  {user.role === "ADMIN" && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/admin" className="flex items-center gap-2 cursor-pointer py-2.5 rounded-lg font-medium text-zinc-600 hover:text-primary transition-colors">
+                        <LayoutDashboard className="h-4 w-4" /> Management Panel
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
+
+                  <DropdownMenuSeparator className="bg-zinc-100" />
+                  <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 cursor-pointer py-2.5 rounded-lg font-bold text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors">
+                    <LogOut className="h-4 w-4" /> Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -172,9 +193,29 @@ const Navbar = () => {
           <div className="flex flex-col space-y-2">
             {user ? (
               <>
-                <div className="text-sm text-muted-foreground px-1">{user.email}</div>
-                <Button variant="destructive" onClick={() => { handleLogout(); setIsOpen(false); }}>
-                  Sign Out
+                <div className="bg-zinc-50 p-4 rounded-2xl border border-zinc-100 mb-2">
+                  <p className="font-bold text-zinc-900 leading-none mb-1">{user.profile?.firstName} {user.profile?.lastName}</p>
+                  <p className="text-xs font-medium text-zinc-500">{user.email}</p>
+                </div>
+                
+                {user.role === "STUDENT" && (
+                  <Link to="/profile" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full h-11 rounded-xl justify-start font-bold border-zinc-200">
+                      <User className="mr-2 h-4 w-4" /> My Profile
+                    </Button>
+                  </Link>
+                )}
+
+                {user.role === "ADMIN" && (
+                  <Link to="/admin" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full h-11 rounded-xl justify-start font-bold border-zinc-200">
+                      <LayoutDashboard className="mr-2 h-4 w-4" /> Management Panel
+                    </Button>
+                  </Link>
+                )}
+
+                <Button variant="destructive" className="h-11 rounded-xl font-bold" onClick={() => { handleLogout(); setIsOpen(false); }}>
+                  <LogOut className="mr-2 h-4 w-4" /> Sign Out
                 </Button>
               </>
             ) : (

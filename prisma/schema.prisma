@@ -24,6 +24,7 @@ model User {
   enrollments   Enrollment[]
   registrations WebinarRegistration[]
   bookings      Booking[]
+  payments      Payment[]
   
   // Franchise relations
   franchisePartner FranchisePartner?
@@ -117,9 +118,26 @@ model Enrollment {
   courseId  String
   course    Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
   enrolledAt DateTime @default(now())
-  status    String    @default("COMPLETED")
+  status    String    @default("COMPLETED") // COMPLETED, PENDING, FAILED
+  paymentId String?   @unique
+  payment   Payment?  @relation(fields: [paymentId], references: [id])
 
   @@unique([userId, courseId])
+}
+
+model Payment {
+  id            String   @id @default(cuid())
+  amount        Float
+  currency      String   @default("INR")
+  status        String   @default("PENDING") // PENDING, SUCCESS, FAILED
+  provider      String   @default("STRIPE")
+  providerId    String?  @unique // Stripe PaymentIntent ID
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  enrollment    Enrollment?
 }
 
 model Progress {
@@ -253,18 +271,4 @@ model Payout {
   status    String        @default("PENDING")
   paidAt    DateTime?
   createdAt DateTime      @default(now())
-}
-
-// --- Payments ---
-
-model Payment {
-  id            String        @id @default(cuid())
-  amount        Float
-  currency      String        @default("INR")
-  status        String        @default("PENDING")
-  provider      String        // e.g., "Razorpay"
-  providerId    String?       @unique // external ID
-  data          String?       // raw provider response
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
 }

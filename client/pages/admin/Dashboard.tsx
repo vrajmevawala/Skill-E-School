@@ -62,7 +62,7 @@ const ActivityItem = ({ type, title, time, status }: any) => (
         </div>
         <Badge variant="secondary" className={cn(
             "text-[10px] uppercase font-bold tracking-widest px-2",
-            status === "Completed" ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-600"
+            status === "Completed" || status === "Active" ? "bg-emerald-50 text-emerald-700" : "bg-zinc-100 text-zinc-600"
         )}>
             {status}
         </Badge>
@@ -74,7 +74,13 @@ const Dashboard = () => {
         totalUsers: 0,
         totalCourses: 0,
         totalWebinars: 0,
-        activeFranchises: 0
+        activeFranchises: 0,
+        recentUsers: [] as any[],
+        roleDistribution: {
+            STUDENT: 0,
+            TRAINER: 0,
+            ADMIN: 0
+        }
     });
     const [loading, setLoading] = useState(true);
 
@@ -88,11 +94,19 @@ const Dashboard = () => {
                     api.get("/franchise/admin/partners")
                 ]);
 
+                const users = usersRes.users || [];
+                const roles = users.reduce((acc: any, curr: any) => {
+                    acc[curr.role] = (acc[curr.role] || 0) + 1;
+                    return acc;
+                }, { STUDENT: 0, TRAINER: 0, ADMIN: 0 });
+
                 setStats({
-                    totalUsers: usersRes.users?.length || 0,
+                    totalUsers: users.length,
                     totalCourses: coursesRes.courses?.length || 0,
                     totalWebinars: webinarsRes.webinars?.length || 0,
-                    activeFranchises: franchiseRes.partners?.length || 0
+                    activeFranchises: franchiseRes.partners?.length || 0,
+                    recentUsers: users.slice(0, 5),
+                    roleDistribution: roles
                 });
             } catch (err) {
                 console.error(err);
@@ -135,51 +149,64 @@ const Dashboard = () => {
                     </CardHeader>
                     <CardContent className="p-8 pt-0">
                         <div className="space-y-2">
-                            <ActivityItem type="enrollment" title="James Miller enrolled in Advanced React Architecture" time="2 minutes ago" status="Completed" />
-                            <ActivityItem type="enrollment" title="Sarah Wilson enrolled in UI/UX Design Fundamentals" time="15 minutes ago" status="Completed" />
-                            <ActivityItem type="enrollment" title="David Chen enrolled in Node.js Microservices" time="1 hour ago" status="Completed" />
-                            <ActivityItem type="enrollment" title="Elena Rodriguez enrolled in Python for Data Science" time="3 hours ago" status="Completed" />
-                            <ActivityItem type="enrollment" title="Marcus Thorne enrolled in Digital Marketing Strategy" time="Yesterday" status="Completed" />
+                            {stats.recentUsers.length > 0 ? (
+                                stats.recentUsers.map((u: any) => (
+                                    <ActivityItem 
+                                        key={u.id}
+                                        type="enrollment" 
+                                        title={`${u.profile?.firstName} ${u.profile?.lastName} joined the platform`} 
+                                        time={new Date(u.createdAt).toLocaleDateString()} 
+                                        status={u.status === "ACTIVE" ? "Active" : "Pending"} 
+                                    />
+                                ))
+                            ) : (
+                                <p className="text-sm text-zinc-500 text-center py-4 font-medium">No recent active users found.</p>
+                            )}
                         </div>
                     </CardContent>
                 </Card>
 
                 <Card className="border-none shadow-sm bg-white">
                     <CardHeader className="p-8 pb-4">
-                        <CardTitle className="text-lg font-bold">System Health</CardTitle>
+                        <CardTitle className="text-lg font-bold flex items-center gap-2">
+                            <Users className="h-5 w-5 text-primary" />
+                            User Breakdown
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="p-8 pt-0 space-y-6">
-                        <div className="flex items-center justify-between p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                            <div className="flex items-center gap-3">
-                                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                                <span className="text-sm font-bold text-zinc-900">Database</span>
+                        {[
+                            { label: "Students", count: stats.roleDistribution.STUDENT, color: "bg-blue-500", icon: Users },
+                            { label: "Trainers", count: stats.roleDistribution.TRAINER, color: "bg-emerald-500", icon: BookOpen },
+                            { label: "Admins", count: stats.roleDistribution.ADMIN, color: "bg-purple-500", icon: TrendingUp },
+                        ].map((role) => (
+                            <div key={role.label} className="flex flex-col gap-2 p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <role.icon className={cn("h-4 w-4", role.color === "bg-blue-500" ? "text-blue-600" : role.color === "bg-emerald-500" ? "text-emerald-600" : "text-purple-600")} />
+                                        <span className="text-sm font-bold text-zinc-900">{role.label}</span>
+                                    </div>
+                                    <span className="text-sm font-black text-zinc-900">{role.count}</span>
+                                </div>
+                                <div className="w-full h-1.5 bg-zinc-200 rounded-full overflow-hidden">
+                                    <div
+                                        className={cn("h-full", role.color)}
+                                        style={{
+                                            width: `${stats.totalUsers > 0 ? (role.count / stats.totalUsers) * 100 : 0}%`
+                                        }}
+                                    />
+                                </div>
                             </div>
-                            <Badge className="bg-emerald-100 text-emerald-700 border-none px-2 font-black uppercase text-[8px]">Stable</Badge>
-                        </div>
-                        <div className="flex items-center justify-between p-4 rounded-2xl bg-zinc-50 border border-zinc-100">
-                            <div className="flex items-center gap-3">
-                                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                                <span className="text-sm font-bold text-zinc-900">API Server</span>
-                            </div>
-                            <Badge className="bg-emerald-100 text-emerald-700 border-none px-2 font-black uppercase text-[8px]">Stable</Badge>
-                        </div>
-                        <div className="flex items-center justify-between p-4 rounded-2xl bg-rose-50 border border-rose-100">
-                            <div className="flex items-center gap-3">
-                                <AlertCircle className="h-5 w-5 text-rose-600" />
-                                <span className="text-sm font-bold text-rose-900">Email SMTP</span>
-                            </div>
-                            <Badge className="bg-rose-100 text-rose-700 border-none px-2 font-black uppercase text-[8px]">Latency</Badge>
-                        </div>
+                        ))}
 
-                        <div className="mt-8">
-                            <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest mb-4">Storage Usage</p>
-                            <div className="w-full h-2 bg-zinc-100 rounded-full overflow-hidden">
-                                <div className="h-full bg-primary w-[65%]" />
+                        <div className="mt-8 p-4 rounded-2xl bg-primary/5 border border-primary/10">
+                            <div className="flex justify-between items-center mb-1">
+                                <p className="text-[10px] text-primary font-bold uppercase tracking-widest">Platform Growth</p>
+                                <span className="text-[10px] font-black text-primary">NEW</span>
                             </div>
-                            <div className="flex justify-between mt-2 text-[10px] font-bold text-zinc-500">
-                                <span>0.8 TB / 1.2 TB</span>
-                                <span>65%</span>
-                            </div>
+                            <p className="text-xs text-zinc-600 leading-relaxed font-medium">
+                                You have {stats.totalUsers} registered users across all roles. 
+                                {stats.roleDistribution.STUDENT > 0 ? ` Students make up ${Math.round((stats.roleDistribution.STUDENT / stats.totalUsers) * 100)}% of your base.` : ""}
+                            </p>
                         </div>
                     </CardContent>
                 </Card>

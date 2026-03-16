@@ -67,7 +67,7 @@ const UsersManager = () => {
         else setIsRefreshing(true);
 
         try {
-            const res = await api.get("/admin/users");
+            const res = await api.get("/auth/users");
             setUsers(res.users || []);
         } catch (err) {
             console.error("Failed to fetch users", err);
@@ -78,12 +78,19 @@ const UsersManager = () => {
     };
 
     const handleAction = async (id: string, action: string) => {
+        if (!confirm(`Are you sure you want to ${action} this user?`)) return;
         try {
-            // Placeholder for backend integration
-            console.log(`Performing ${action} on ${id}`);
-            alert(`Action ${action} triggered! Implementation pending backend check.`);
+            if (action === "delete") {
+                await api.delete(`/auth/users/${id}`);
+                setUsers(users.filter(u => u.id !== id));
+            } else if (action === "suspend" || action === "activate") {
+                const status = action === "suspend" ? "INACTIVE" : "ACTIVE";
+                await api.patch(`/auth/users/${id}`, { status });
+                setUsers(users.map(u => u.id === id ? { ...u, status } : u));
+            }
         } catch (err) {
             console.error(err);
+            alert("Failed to perform action");
         }
     };
 
@@ -97,10 +104,17 @@ const UsersManager = () => {
         setIsModalOpen(true);
     };
 
-    const filteredUsers = users.filter(user =>
-        user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredUsers = users.filter(user => {
+        const username = user.username || "";
+        const email = user.email || "";
+        const firstName = user.profile?.firstName || "";
+        const lastName = user.profile?.lastName || "";
+        
+        return username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+               lastName.toLowerCase().includes(searchQuery.toLowerCase());
+    });
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -270,10 +284,10 @@ const UsersManager = () => {
                                             <TableCell className="pl-8 py-4">
                                                 <div className="flex items-center gap-4">
                                                     <div className="h-10 w-10 rounded-full bg-zinc-100 border border-zinc-200 flex items-center justify-center text-zinc-500 font-bold text-xs">
-                                                        {user.username.slice(0, 2).toUpperCase()}
+                                                        {(user.username || user.email || "U").slice(0, 2).toUpperCase()}
                                                     </div>
                                                     <div className="min-w-0">
-                                                        <p className="text-sm font-bold text-zinc-900">{user.username}</p>
+                                                        <p className="text-sm font-bold text-zinc-900">{user.username || user.profile?.firstName + ' ' + user.profile?.lastName || 'No Name'}</p>
                                                         <div className="flex items-center gap-2 mt-0.5">
                                                             <Mail className="h-3 w-3 text-zinc-400" />
                                                             <span className="text-xs font-medium text-zinc-500">{user.email}</span>

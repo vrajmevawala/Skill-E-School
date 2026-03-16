@@ -1,3 +1,4 @@
+import { useNavigate, Link } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Search, Filter, PlayCircle, Lock, Download, FileText, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,6 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
 import { cn } from "@/lib/utils";
+import { PaymentModal } from "@/components/PaymentModal";
+import { toast } from "sonner";
 
 interface CourseLesson {
     id: string;
@@ -41,6 +44,7 @@ interface Course {
 }
 
 export default function Courses() {
+    const navigate = useNavigate();
     const { user, token } = useAuthStore();
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
@@ -48,6 +52,8 @@ export default function Courses() {
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [searchQuery, setSearchQuery] = useState("");
     const [categories, setCategories] = useState<string[]>(["All"]);
+    const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+    const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
 
     useEffect(() => {
         fetchData();
@@ -67,8 +73,8 @@ export default function Courses() {
 
             // Dynamic categories if not already fetched
             if (categories.length === 1) {
-                const cats = Array.from(new Set((res.courses as Course[]).map((c) => c.category?.name).filter(Boolean)));
-                setCategories(["All", ...cats]);
+                const cats = Array.from(new Set((res.courses as Course[]).map((c) => (c.category ? c.category.name : null)).filter(Boolean)));
+                setCategories(["All", ...(cats as string[])]);
             }
         } catch (err) {
             console.error("Failed to fetch courses", err);
@@ -82,20 +88,35 @@ export default function Courses() {
         if (!token) return;
         try {
             const res = await api.get("/courses/my-courses", token);
-            const enrolledIds = res.map((enrollment: any) => enrollment.courseId);
+            // Check if res is an array or if it has an enrollments property
+            const enrollments = Array.isArray(res) ? res : (res.enrollments || []);
+            const enrolledIds = enrollments.map((enrollment: any) => enrollment.courseId);
             setEnrolledCourseIds(enrolledIds);
         } catch (err) {
             console.error("Failed to fetch enrollments", err);
         }
     };
 
-    const handlePayment = (course: Course) => {
+    const handlePayment = async (course: Course) => {
         if (!user) {
-            alert("Please login to enroll in courses.");
+            toast.error("Please login to enroll in courses.");
             return;
         }
-        console.log(`Initiating Razorpay for ${course.title}: ₹${course.price}`);
-        alert(`Redirecting to Razorpay for ₹${course.price}... (Mock Payment)`);
+
+        if (course.isFree || course.price === 0) {
+            // Instant enrollment for free courses
+            try {
+                await api.post(`/courses/${course.id}/enroll`, {}, token);
+                toast.success("Successfully enrolled!");
+                fetchEnrollments();
+            } catch (err: any) {
+                toast.error(err.message || "Enrollment failed");
+            }
+            return;
+        }
+
+        setSelectedCourse(course);
+        setIsPaymentModalOpen(true);
     };
 
     const getInstructorName = (course: Course) => {
@@ -206,105 +227,12 @@ export default function Courses() {
                                         </div>
                                     </CardContent>
                                     <CardFooter className="pt-0 p-6">
-                                        <Dialog>
-                                            <DialogTrigger asChild>
-                                                <Button className="w-full h-12 rounded-xl font-bold shadow-lg shadow-primary/10 active:scale-95 transition-all">
-                                                    {isEnrolled(course.id) ? "Continue Learning" : course.isFree ? "Start Now" : "Enroll Now"}
-                                                </Button>
-                                            </DialogTrigger>
-                                            <DialogContent className="max-w-4xl p-0 overflow-hidden border-none rounded-[1.5rem] bg-white shadow-2xl overflow-y-auto max-h-[90vh]">
-                                                <div className="p-8">
-                                                    <DialogHeader className="mb-6">
-                                                        <DialogTitle className="text-3xl font-bold leading-tight">{course.title}</DialogTitle>
-                                                        <DialogDescription className="text-base">
-                                                            Instructor: {getInstructorName(course)} • Level: {course.level}
-                                                        </DialogDescription>
-                                                    </DialogHeader>
-
-                                                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                                                        <div className="lg:col-span-2 space-y-6">
-                                                            {/* Video Player */}
-                                                            <div className="aspect-video bg-zinc-900 rounded-2xl overflow-hidden shadow-2xl relative">
-                                                                {(course.isFree || isEnrolled(course.id)) ? (
-                                                                    <video
-                                                                        controls
-                                                                        className="w-full h-full object-contain"
-                                                                        src={course.previewVideoUrl || (course.lessons?.[0]?.videoUrl || "")}
-                                                                        poster={course.thumbnail || undefined}
-                                                                        key={course.previewVideoUrl}
-                                                                    >
-                                                                        Your browser does not support the video tag.
-                                                                    </video>
-                                                                ) : (
-                                                                    <div className="w-full h-full flex flex-col items-center justify-center text-white p-12 text-center bg-gradient-to-br from-zinc-900 to-zinc-800">
-                                                                        <div className="h-20 w-20 bg-zinc-800 rounded-3xl flex items-center justify-center mb-6 shadow-xl ring-1 ring-zinc-700">
-                                                                            <Lock className="h-10 w-10 text-zinc-500" />
-                                                                        </div>
-                                                                        <h3 className="text-xl font-bold mb-2">Premium Content</h3>
-                                                                        <p className="text-sm text-zinc-400 mb-8 max-w-xs leading-relaxed">Enroll in this course to unlock all video modules and downloadable assets.</p>
-                                                                        <Button onClick={() => handlePayment(course)} className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-10 rounded-xl shadow-2xl">
-                                                                            Unlock for ₹{course.price}
-                                                                        </Button>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-
-                                                            <div className="space-y-3">
-                                                                <h3 className="font-bold text-xl tracking-tight">Curriculum Insight</h3>
-                                                                <p className="text-zinc-600 leading-relaxed text-base">{course.description}</p>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="space-y-6">
-                                                            <div className="border border-zinc-100 bg-zinc-50/50 rounded-2xl p-6">
-                                                                <h3 className="font-bold mb-4 flex items-center gap-2 text-zinc-900">
-                                                                    <FileText className="h-5 w-5 text-primary" /> Assets & Resources
-                                                                </h3>
-                                                                <ul className="space-y-3">
-                                                                    {course.resources?.map((res) => (
-                                                                        <li key={res.id} className="flex items-center justify-between p-3 rounded-xl bg-white border border-zinc-100 shadow-sm transition-all group hover:border-primary/20">
-                                                                            <div className="flex items-center gap-3 min-w-0">
-                                                                                <div className="h-8 w-8 rounded-lg bg-zinc-50 flex items-center justify-center shrink-0">
-                                                                                    <FileText className="h-4 w-4 text-zinc-400 group-hover:text-primary transition-colors" />
-                                                                                </div>
-                                                                                <div className="truncate">
-                                                                                    <p className="text-sm font-bold text-zinc-800 truncate leading-tight">{res.name}</p>
-                                                                                    <Badge variant="outline" className="text-[8px] font-black uppercase tracking-widest h-4 px-1 px-1">{res.type}</Badge>
-                                                                                </div>
-                                                                            </div>
-                                                                            {(res.isFree || isEnrolled(course.id)) ? (
-                                                                                <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400 hover:text-primary hover:bg-primary/5">
-                                                                                    <Download className="h-4 w-4" />
-                                                                                </Button>
-                                                                            ) : (
-                                                                                <Lock className="h-3.5 w-3.5 text-zinc-200" />
-                                                                            )}
-                                                                        </li>
-                                                                    ))}
-                                                                    {course.resources?.length === 0 && (
-                                                                        <p className="text-xs text-zinc-400 italic text-center py-4">No additional resources listed.</p>
-                                                                    )}
-                                                                </ul>
-                                                            </div>
-
-                                                            {!course.isFree && !isEnrolled(course.id) && (
-                                                                <Card className="bg-primary text-white border-none shadow-xl shadow-primary/20 rounded-2xl">
-                                                                    <CardContent className="pt-8 text-center space-y-4">
-                                                                        <div className="text-3xl font-black">₹{course.price}</div>
-                                                                        <Button className="w-full bg-white text-primary hover:bg-zinc-50 h-14 rounded-xl font-black text-base active:scale-95 transition-all" onClick={() => handlePayment(course)}>
-                                                                            Join Academy
-                                                                        </Button>
-                                                                        <div className="flex items-center justify-center gap-2 text-[10px] uppercase font-bold tracking-[0.1em] opacity-80 pb-4">
-                                                                            <CheckCircle className="h-3 w-3" /> Secure Checkout
-                                                                        </div>
-                                                                    </CardContent>
-                                                                </Card>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </DialogContent>
-                                        </Dialog>
+                                        <Button 
+                                            onClick={() => navigate(`/courses/${course.id}`)}
+                                            className="w-full h-12 rounded-xl font-bold shadow-lg shadow-primary/10 active:scale-95 transition-all"
+                                        >
+                                            {isEnrolled(course.id) ? "Continue Learning" : course.isFree ? "Start Now" : "Enroll Now"}
+                                        </Button>
                                     </CardFooter>
                                 </Card>
                             ))}

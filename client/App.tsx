@@ -9,12 +9,19 @@ import Franchise from "./pages/franchise";
 import Webinars from "./pages/webinars";
 import Updates from "./pages/Updates";
 import AuthPage from "./pages/AuthPage";
+import FAQ from "./pages/FAQ";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import ContactUs from "./pages/ContactUs";
 import NotFound from "./pages/NotFound";
+import CourseView from "./pages/CourseView";
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
 import AdminCourses from "./pages/admin/Courses";
 import AdminWebinars from "./pages/admin/Webinars";
 import AdminFranchise from "./pages/admin/Franchise";
+import AdminSettings from "./pages/admin/Settings";
+import StudentProfile from "./pages/student/Profile";
 import { useAuthStore } from "./store/auth";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminLayout from "./components/admin/AdminLayout";
@@ -27,7 +34,7 @@ function App() {
   }, [initialize]);
 
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         {/* Auth routes without standard layout */}
         <Route path="/login" element={<AuthPage />} />
@@ -41,7 +48,12 @@ function App() {
         <Route element={<Layout><Consultancy /></Layout>} path="/consultancy" />
         <Route element={<Layout><Franchise /></Layout>} path="/franchise" />
         <Route element={<Layout><Webinars /></Layout>} path="/webinars" />
+        <Route element={<Layout><CourseView /></Layout>} path="/courses/:id" />
         <Route element={<Layout><Updates /></Layout>} path="/updates" />
+        <Route element={<Layout><FAQ /></Layout>} path="/faq" />
+        <Route element={<Layout><PrivacyPolicy /></Layout>} path="/privacy" />
+        <Route element={<Layout><TermsOfService /></Layout>} path="/terms" />
+        <Route element={<Layout><ContactUs /></Layout>} path="/contact" />
         {/* Admin Routes */}
         <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
           <Route element={<AdminLayout />}>
@@ -50,8 +62,12 @@ function App() {
             <Route path="/admin/courses" element={<AdminCourses />} />
             <Route path="/admin/webinars" element={<AdminWebinars />} />
             <Route path="/admin/franchise" element={<AdminFranchise />} />
-            <Route path="/admin/settings" element={<NotFound />} />
+            <Route path="/admin/settings" element={<AdminSettings />} />
           </Route>
+        </Route>
+
+        <Route element={<ProtectedRoute allowedRoles={["STUDENT"]} />}>
+          <Route element={<Layout><StudentProfile /></Layout>} path="/profile" />
         </Route>
 
         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

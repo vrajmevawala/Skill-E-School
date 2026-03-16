@@ -176,4 +176,64 @@ export class CoursesService {
     static async getCategories() {
         return prisma.courseCategory.findMany();
     }
+
+    /**
+     * Check if user has access to course content
+     * Returns course details with lessons and resources if user is enrolled
+     */
+    static async checkCourseAccess(userId: string, courseId: string) {
+        try {
+            // Get course details
+            const course = await prisma.course.findUnique({
+                where: { id: courseId },
+                include: {
+                    category: true,
+                    lessons: { orderBy: { order: "asc" } },
+                    resources: true,
+                    trainer: { include: { profile: true } },
+                },
+            });
+
+            if (!course) {
+                throw new AppError("Course not found", 404);
+            }
+
+            // Check enrollment status
+            const enrollment = await prisma.enrollment.findUnique({
+                where: { userId_courseId: { userId, courseId } },
+            });
+
+            const isEnrolled = !!enrollment;
+            const canAccessContent = isEnrolled && enrollment.status === "COMPLETED";
+
+            console.log(`[CoursesService] Access check - User: ${userId}, Course: ${courseId}, Enrolled: ${isEnrolled}, CanAccess: ${canAccessContent}`);
+
+            return {
+                courseId,
+                isEnrolled,
+                enrollmentStatus: enrollment?.status || null,
+                canAccessContent,
+                // Only return lessons and resources if user has access
+                ...(canAccessContent && {
+                    lessons: course.lessons,
+                    resources: course.resources,
+                }),
+                // Basic course info always available
+                course: {
+                    id: course.id,
+                    title: course.title,
+                    description: course.description,
+                    thumbnail: course.thumbnail,
+                    price: course.price,
+                    isFree: course.isFree,
+                    level: course.level,
+                    trainer: course.trainer,
+                    category: course.category,
+                }
+            };
+        } catch (error: any) {
+            if (error instanceof AppError) throw error;
+            throw new AppError(error.message || "Failed to check course access", 500);
+        }
+    }
 }
