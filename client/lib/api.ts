@@ -1,4 +1,6 @@
-const API_BASE = "/api";
+import { toast } from "sonner";
+
+const API_BASE = "http://localhost:8080/api";
 
 interface ApiOptions extends RequestInit {
     token?: string;
@@ -8,25 +10,53 @@ async function apiFetch<T = any>(endpoint: string, options: ApiOptions = {}): Pr
     const { token: providedToken, headers, ...rest } = options;
     const token = providedToken || localStorage.getItem("token");
 
-    const res = await fetch(`${API_BASE}${endpoint}`, {
-        headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            ...headers,
-        },
-        ...rest,
-    });
+    try {
+        const res = await fetch(`${API_BASE}${endpoint}`, {
+            headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                ...headers,
+            },
+            ...rest,
+        });
 
-    const json = await res.json();
+        // Handle raw responses or empty responses if needed
+        const contentType = res.headers.get("content-type");
+        let json: any = {};
+        if (contentType && contentType.includes("application/json")) {
+            json = await res.json();
+        }
 
-    if (!res.ok) {
-        const message = json?.error?.message || json?.message || "Something went wrong";
-        const error: any = new Error(message);
-        error.status = res.status;
+        if (!res.ok) {
+            // Check for unauthorized access
+            if (res.status === 401) {
+                localStorage.removeItem("token");
+                // Avoid infinite redirect if already on login
+                if (!window.location.pathname.includes("/login")) {
+                    window.location.href = "/login";
+                }
+            }
+
+            const message = json?.error?.message || json?.message || "Something went wrong";
+            
+            // Show toast for server errors 500+
+            if (res.status >= 500) {
+                toast.error("Internal Server Error. Please try again later.");
+            }
+
+            const error: any = new Error(message);
+            error.status = res.status;
+            throw error;
+        }
+
+        // Standard envelop unwrapping: { status, data, message }
+        return json.data ?? json;
+    } catch (error: any) {
+        if (!error.status) {
+            toast.error("Network Error: Please check your internet connection.");
+        }
         throw error;
     }
-
-    return json.data ?? json;
 }
 
 export const api = {

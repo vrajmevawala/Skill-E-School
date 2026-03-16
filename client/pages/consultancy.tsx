@@ -8,7 +8,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { api } from "@/lib/api";
+import { consultancyService } from "@/services/consultancy.service";
+import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth";
 
 interface Expert {
@@ -25,13 +26,13 @@ interface Expert {
 export default function Consultancy() {
     const [experts, setExperts] = useState<Expert[]>([]);
     const [loading, setLoading] = useState(true);
-    const [date, setDate] = useState<Date | undefined>(new Date());
+    const [isBooking, setIsBooking] = useState<string | null>(null);
     const { token } = useAuthStore();
 
     useEffect(() => {
         const fetchExperts = async () => {
             try {
-                const res = await api.get("/consultancy/experts");
+                const res = await consultancyService.getExperts();
                 setExperts(res.experts || []);
             } catch {
                 setExperts([]);
@@ -44,17 +45,20 @@ export default function Consultancy() {
 
     const handleBooking = async (slotId: string) => {
         if (!token) {
-            alert("Please log in to book a session.");
+            toast.error("Please log in to book a session.");
             return;
         }
+        setIsBooking(slotId);
         try {
-            await api.post("/consultancy/book", { slotId }, token);
-            alert("Session booked successfully! Check your email for details.");
+            await consultancyService.book({ slotId });
+            toast.success("Session booked successfully! Check your email for details.");
             // Refresh experts to update available slots
-            const res = await api.get("/consultancy/experts");
+            const res = await consultancyService.getExperts();
             setExperts(res.experts || []);
         } catch (err: any) {
-            alert(err.message || "Failed to book session.");
+            toast.error(err.message || "Failed to book session.");
+        } finally {
+            setIsBooking(null);
         }
     };
 
@@ -122,8 +126,13 @@ export default function Consultancy() {
                                                                 {" "}
                                                                 {new Date(slot.startTime).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}
                                                             </span>
-                                                            <Button size="sm" variant="outline" onClick={() => handleBooking(slot.id)}>
-                                                                Book
+                                                            <Button 
+                                                                size="sm" 
+                                                                variant="outline" 
+                                                                onClick={() => handleBooking(slot.id)}
+                                                                disabled={isBooking === slot.id}
+                                                            >
+                                                                {isBooking === slot.id ? <Loader2 className="h-4 w-4 animate-spin" /> : "Book"}
                                                             </Button>
                                                         </div>
                                                     ))}

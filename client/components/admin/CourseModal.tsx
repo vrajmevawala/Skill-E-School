@@ -290,7 +290,7 @@ export const CourseModal = ({
               </div>
 
               {lessons.length === 0 && (
-                <div className="text-center py-8 border-2 border-dashed rounded-lg bg-zinc-50">
+                <div className="text-center py-8 border-2 border-dashed rounded-lg bg-gray-50">
                   <p className="text-xs text-muted-foreground">No lessons added yet. Click "Add Lesson" to start building your course content.</p>
                 </div>
               )}
@@ -312,7 +312,7 @@ export const CourseModal = ({
                         type="button" 
                         variant="ghost" 
                         size="icon" 
-                        className="h-8 w-8 text-rose-500 hover:bg-rose-50"
+                        className="h-8 w-8 text-red-500 hover:bg-red-50"
                         onClick={() => removeLesson(lesson.id)}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -358,7 +358,7 @@ export const CourseModal = ({
               </div>
 
               {resources.length === 0 && (
-                <div className="text-center py-8 border-2 border-dashed rounded-lg bg-zinc-50">
+                <div className="text-center py-8 border-2 border-dashed rounded-lg bg-gray-50">
                   <p className="text-xs text-muted-foreground">No resources added. Add PDFs, slide decks, or source code for your students.</p>
                 </div>
               )}
@@ -403,7 +403,7 @@ export const CourseModal = ({
                         type="button" 
                         variant="ghost" 
                         size="icon" 
-                        className="h-8 w-8 text-rose-500 hover:bg-rose-50"
+                        className="h-8 w-8 text-red-500 hover:bg-red-50"
                         onClick={() => removeResource(resource.id)}
                       >
                         <Trash2 className="h-4 w-4" />

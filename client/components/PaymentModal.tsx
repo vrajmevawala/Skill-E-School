@@ -6,11 +6,10 @@ import {
   useStripe,
   useElements,
 } from "@stripe/react-stripe-js";
-import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
 import { useAuthStore } from "@/store/auth";
-import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
+import { Loader2, CheckCircle, AlertCircle, Lock } from "lucide-react";
 import { toast } from "sonner";
 import { PaymentVerificationResponse } from "@shared/api";
 
@@ -62,12 +61,11 @@ const CheckoutForm = ({ clientSecret, courseId, paymentId, onSucceeded, onCancel
         if (status === "succeeded") {
           console.log(`[CheckoutForm] ✓ Payment succeeded! Starting verification...`);
           toast.success("Payment successful! Verifying...");
-          // Pass the payment ID to parent for verification
           onSucceeded(paymentId);
         } else if (status === "processing") {
           console.log(`[CheckoutForm] Payment is processing, will verify status...`);
           toast.info("Payment processing...");
-          onSucceeded(paymentId); // Still trigger verification for processing payments
+          onSucceeded(paymentId);
         } else if (status === "requires_action") {
           console.error(`[CheckoutForm] Payment requires additional action (3D Secure)`);
           toast.error("Payment requires additional confirmation. Please check your card details.");
@@ -79,7 +77,7 @@ const CheckoutForm = ({ clientSecret, courseId, paymentId, onSucceeded, onCancel
         } else {
           console.warn(`[CheckoutForm] Unknown payment status: ${status}`);
           toast.info(`Payment status: ${status}. Please wait for confirmation...`);
-          onSucceeded(paymentId); // Still attempt verification
+          onSucceeded(paymentId);
         }
       } else {
         console.error(`[CheckoutForm] No payment intent in response`);
@@ -94,32 +92,45 @@ const CheckoutForm = ({ clientSecret, courseId, paymentId, onSucceeded, onCancel
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="p-3 border rounded-md bg-white">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="border border-gray-300 rounded-lg p-4 bg-gray-50">
         <CardElement options={{
           style: {
             base: {
               fontSize: '16px',
-              color: '#424770',
+              color: '#111827',
+              fontFamily: 'Inter, system-ui, sans-serif',
               '::placeholder': {
-                color: '#aab7c4',
+                color: '#9CA3AF',
               },
             },
             invalid: {
-              color: '#9e2146',
+              color: '#EF4444',
             },
           },
         }} />
       </div>
-      <div className="flex justify-end gap-3">
-        <Button type="button" variant="outline" onClick={onCancel} disabled={loading}>
+      <div className="flex gap-3">
+        <button 
+          type="button" 
+          onClick={onCancel} 
+          disabled={loading}
+          className="flex-1 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg px-5 py-3 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
           Cancel
-        </Button>
-        <Button type="submit" disabled={!stripe || loading}>
-          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+        </button>
+        <button 
+          type="submit" 
+          disabled={!stripe || loading}
+          className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg px-5 py-3 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+        >
+          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           Pay Now
-        </Button>
+        </button>
       </div>
+      <p className="text-xs text-gray-400 text-center flex items-center justify-center gap-1.5">
+        <Lock className="h-3 w-3" /> Payments are secured with 256-bit SSL encryption
+      </p>
     </form>
   );
 };
@@ -158,7 +169,7 @@ export function PaymentModal({ open, onOpenChange, course, onSuccess }: {
       
       setClientSecret(res.clientSecret);
       setPublishableKey(res.publishableKey);
-      setPaymentId(res.paymentId); // Store the payment ID from backend
+      setPaymentId(res.paymentId);
       
     } catch (err: any) {
       console.error(`[PaymentModal] Init error:`, err);
@@ -169,11 +180,6 @@ export function PaymentModal({ open, onOpenChange, course, onSuccess }: {
     }
   };
 
-  /**
-   * Verify payment status and check if enrollment is complete
-   * This is called after successful payment from Stripe
-   * Includes retry logic for webhook processing
-   */
   const verifyPaymentAndAccessCourse = async (pId: string) => {
     if (!pId) {
       toast.error("Payment ID missing");
@@ -182,12 +188,11 @@ export function PaymentModal({ open, onOpenChange, course, onSuccess }: {
 
     setVerifying(true);
     let retryCount = 0;
-    const maxRetries = 30; // Try for up to 2.5 minutes (30 * 1 second)
-    const retryDelay = 1000; // 1 second between retries
+    const maxRetries = 30;
+    const retryDelay = 1000;
 
     const attemptVerification = async (): Promise<boolean> => {
       try {
-        // First, verify the payment status with the server
         console.log(`[PaymentModal] Verifying payment: ${pId} for course: ${course.id} (attempt ${retryCount + 1}/${maxRetries})`);
         
         const verification = await api.get(
@@ -199,7 +204,6 @@ export function PaymentModal({ open, onOpenChange, course, onSuccess }: {
         setPaymentStatus(verification);
 
         if (verification.success) {
-          // Payment successful, now check course access with full details
           console.log(`[PaymentModal] Payment verified, checking access...`);
           const accessResponse = await api.get(`/courses/${course.id}/access`, token);
           console.log(`[PaymentModal] Access response:`, accessResponse);
@@ -207,7 +211,6 @@ export function PaymentModal({ open, onOpenChange, course, onSuccess }: {
           if (accessResponse.canAccessContent) {
             setVerifying(false);
             toast.success("Course content is now available!");
-            // Show success message for 2 seconds before closing
             await new Promise(r => setTimeout(r, 2000));
             onSuccess();
             onOpenChange(false);
@@ -218,18 +221,15 @@ export function PaymentModal({ open, onOpenChange, course, onSuccess }: {
             return false;
           }
         } else if (verification.status === "PENDING" && retryCount < maxRetries) {
-          // Payment still processing, retry after delay (silently keep retrying)
           console.log(`[PaymentModal] Payment still PENDING, retrying in ${retryDelay}ms... (${retryCount + 1}/${maxRetries})`);
           retryCount++;
           await new Promise(r => setTimeout(r, retryDelay));
-          return attemptVerification(); // Retry recursively
+          return attemptVerification();
         } else if (verification.status === "PENDING" && retryCount >= maxRetries) {
-          // Max retries reached while still pending
           setVerifying(false);
           toast.error("Payment verification timeout. Please refresh and check your course access.");
           return false;
         } else {
-          // Payment failed
           setVerifying(false);
           toast.error(verification.message || "Payment verification failed");
           return false;
@@ -237,12 +237,11 @@ export function PaymentModal({ open, onOpenChange, course, onSuccess }: {
       } catch (err: any) {
         console.error(`[PaymentModal] Verification error (attempt ${retryCount + 1}):`, err);
         
-        // Retry on network errors
         if (retryCount < maxRetries && (err.message?.includes("Network") || err.message?.includes("Failed to fetch"))) {
           console.log(`[PaymentModal] Network error, retrying...`);
           retryCount++;
           await new Promise(r => setTimeout(r, retryDelay));
-          return attemptVerification(); // Retry recursively
+          return attemptVerification();
         }
         
         setVerifying(false);
@@ -258,31 +257,32 @@ export function PaymentModal({ open, onOpenChange, course, onSuccess }: {
   if (paymentStatus?.success) {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Payment Successful</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col items-center space-y-4 py-8">
-            <CheckCircle className="h-16 w-16 text-green-600" />
+        <DialogContent className="sm:max-w-[425px] rounded-2xl p-8">
+          <div className="flex flex-col items-center space-y-4 py-6">
+            <div className="h-16 w-16 bg-emerald-50 rounded-full flex items-center justify-center">
+              <CheckCircle className="h-8 w-8 text-emerald-600" />
+            </div>
             <div className="text-center space-y-2">
-              <h3 className="font-semibold text-lg">Access Granted!</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="font-bold text-xl text-gray-900">Access Granted!</h3>
+              <p className="text-sm text-gray-500">
                 You now have access to "{course?.title}"
               </p>
-              <p className="text-xs text-muted-foreground mt-4">
+              <p className="text-xs text-gray-400 mt-4">
                 All lessons and resources are available under "My Courses"
               </p>
             </div>
-            {verifying && (
-              <div className="flex items-center gap-2 text-sm">
+            {verifying ? (
+              <div className="flex items-center gap-2 text-sm text-gray-500">
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Setting up your access...
               </div>
-            )}
-            {!verifying && (
-              <Button className="w-full" onClick={() => onOpenChange(false)}>
+            ) : (
+              <button 
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-5 py-3 transition-colors cursor-pointer"
+                onClick={() => onOpenChange(false)}
+              >
                 Continue
-              </Button>
+              </button>
             )}
           </div>
         </DialogContent>
@@ -296,28 +296,25 @@ export function PaymentModal({ open, onOpenChange, course, onSuccess }: {
     
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Processing Payment</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col items-center space-y-6 py-12">
+        <DialogContent className="sm:max-w-[425px] rounded-2xl p-8">
+          <div className="flex flex-col items-center space-y-6 py-8">
             <div className="relative">
-              <div className="absolute inset-0 bg-blue-500 rounded-full opacity-20 animate-pulse" />
-              <Loader2 className="h-16 w-16 text-blue-600 animate-spin relative" />
+              <div className="absolute inset-0 bg-indigo-500 rounded-full opacity-20 animate-pulse" />
+              <Loader2 className="h-16 w-16 text-indigo-600 animate-spin relative" />
             </div>
             <div className="text-center space-y-3">
-              <h3 className="font-bold text-lg">Payment Processing</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="font-bold text-lg text-gray-900">Payment Processing</h3>
+              <p className="text-sm text-gray-500">
                 Your payment is being confirmed. This usually takes a few seconds...
               </p>
-              <p className="text-xs text-muted-foreground text-blue-600 font-medium">
+              <p className="text-xs text-indigo-600 font-medium">
                 Please keep this window open
               </p>
             </div>
             <div className="w-full space-y-2">
               {isTestMode && (
-                <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700" 
+                <button 
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-5 py-3 transition-colors cursor-pointer flex items-center justify-center gap-2" 
                   onClick={async () => {
                     try {
                       await api.post(
@@ -326,25 +323,23 @@ export function PaymentModal({ open, onOpenChange, course, onSuccess }: {
                         token
                       );
                       toast.success("Payment confirmed (test mode)");
-                      // Retry verification
                       await verifyPaymentAndAccessCourse(paymentStatus.paymentId);
                     } catch (err: any) {
                       toast.error(err.message || "Failed to confirm payment");
                     }
                   }}
                 >
-                  <Loader2 className="mr-2 h-4 w-4" />
+                  <Loader2 className="h-4 w-4" />
                   Confirm Payment (Test)
-                </Button>
+                </button>
               )}
-              <Button 
-                variant="outline" 
-                className="w-full" 
+              <button 
+                className="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg px-5 py-3 transition-colors cursor-pointer disabled:opacity-50"
                 onClick={() => onOpenChange(false)}
                 disabled={verifying}
               >
                 Close Window
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>
@@ -356,25 +351,30 @@ export function PaymentModal({ open, onOpenChange, course, onSuccess }: {
   if (paymentStatus && paymentStatus.status === "FAILED") {
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Payment Failed</DialogTitle>
-          </DialogHeader>
-          <div className="flex flex-col items-center space-y-4 py-8">
-            <AlertCircle className="h-16 w-16 text-red-600" />
+        <DialogContent className="sm:max-w-[425px] rounded-2xl p-8">
+          <div className="flex flex-col items-center space-y-4 py-6">
+            <div className="h-16 w-16 bg-red-50 rounded-full flex items-center justify-center">
+              <AlertCircle className="h-8 w-8 text-red-500" />
+            </div>
             <div className="text-center space-y-2">
-              <h3 className="font-semibold text-lg">Payment {paymentStatus.status}</h3>
-              <p className="text-sm text-muted-foreground">
+              <h3 className="font-bold text-lg text-gray-900">Payment {paymentStatus.status}</h3>
+              <p className="text-sm text-gray-500">
                 {paymentStatus.message}
               </p>
             </div>
-            <div className="flex gap-3 w-full flex-col">
-              <Button className="w-full" onClick={() => initPayment()}>
+            <div className="flex flex-col gap-2 w-full">
+              <button 
+                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg px-5 py-3 transition-colors cursor-pointer" 
+                onClick={() => initPayment()}
+              >
                 Try Again
-              </Button>
-              <Button variant="outline" className="w-full" onClick={() => onOpenChange(false)}>
+              </button>
+              <button 
+                className="w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg px-5 py-3 transition-colors cursor-pointer" 
+                onClick={() => onOpenChange(false)}
+              >
                 Cancel
-              </Button>
+              </button>
             </div>
           </div>
         </DialogContent>
@@ -384,17 +384,17 @@ export function PaymentModal({ open, onOpenChange, course, onSuccess }: {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] rounded-2xl p-8">
         <DialogHeader>
-          <DialogTitle>Complete Purchase</DialogTitle>
-          <DialogDescription>
-            You are purchasing <strong>{course?.title}</strong> for ₹{course?.price}
+          <DialogTitle className="text-lg font-bold text-gray-900">Complete Purchase</DialogTitle>
+          <DialogDescription className="text-sm text-gray-500">
+            You are purchasing <strong className="text-gray-900">{course?.title}</strong> for <strong className="text-indigo-600">₹{course?.price}</strong>
           </DialogDescription>
         </DialogHeader>
 
         {loading ? (
           <div className="flex justify-center p-8">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-indigo-600" />
           </div>
         ) : clientSecret && stripePromise && paymentId ? (
           <Elements stripe={stripePromise} options={{ clientSecret }}>
@@ -407,7 +407,7 @@ export function PaymentModal({ open, onOpenChange, course, onSuccess }: {
             />
           </Elements>
         ) : (
-          <div className="text-center p-4 text-muted-foreground">
+          <div className="text-center p-4 text-gray-500 text-sm">
             Initializing payment...
           </div>
         )}
@@ -415,4 +415,3 @@ export function PaymentModal({ open, onOpenChange, course, onSuccess }: {
     </Dialog>
   );
 }
-

@@ -10,12 +10,9 @@ import {
   Loader2,
   ArrowLeft
 } from "lucide-react";
-import { api } from "@/lib/api";
+import { courseService } from "@/services/course.service";
 import { useAuthStore } from "@/store/auth";
 import { useCourseAccess } from "@/hooks/use-course-access";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { PaymentModal } from "@/components/PaymentModal";
@@ -70,7 +67,7 @@ export default function CourseView() {
     const fetchCourse = async () => {
         setLoading(true);
         try {
-            const data = await api.get(`/courses/${id}`);
+            const data = await courseService.getById(id!);
             setCourse(data.course);
             
             if (data.course.lessons?.length > 0) {
@@ -92,7 +89,7 @@ export default function CourseView() {
 
         if (course?.isFree || course?.price === 0) {
             try {
-                await api.post(`/courses/${id}/enroll`, {}, token);
+                await courseService.enroll(id!);
                 toast.success("Successfully enrolled!");
                 fetchCourse();
             } catch (err: any) {
@@ -106,7 +103,7 @@ export default function CourseView() {
     if (loading || accessLoading) {
         return (
             <div className="flex h-[70vh] items-center justify-center">
-                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <Loader2 className="h-10 w-10 animate-spin text-indigo-600" />
             </div>
         );
     }
@@ -127,23 +124,30 @@ export default function CourseView() {
       : course.resources;
 
     return (
-        <div className="min-h-screen bg-zinc-50/50">
+        <div className="min-h-screen bg-gray-50">
             {/* Top Navigation */}
-            <div className="bg-white border-b px-6 py-4 flex items-center gap-4 sticky top-0 z-10 shadow-sm">
-                <Button variant="ghost" size="icon" onClick={() => navigate("/courses")}>
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
+            <div className="bg-white border-b border-gray-200 px-4 sm:px-6 lg:px-8 py-4 flex items-center gap-4 sticky top-16 z-10 shadow-sm">
+                <button onClick={() => navigate("/courses")} className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+                    <ArrowLeft className="h-5 w-5 text-gray-600" />
+                </button>
                 <div>
-                    <h1 className="font-bold text-lg leading-tight">{course.title}</h1>
+                    <h1 className="font-bold text-lg text-gray-900 leading-tight">{course.title}</h1>
                     <div className="flex items-center gap-2 mt-0.5">
-                        <Badge variant="secondary" className="text-[10px] uppercase font-bold tracking-wider">
-                           {isEnrolled ? "Enrolled" : course.isFree ? "Free Access" : `Premium - ₹${course.price}`}
-                        </Badge>
+                        <span className={cn(
+                            "inline-flex text-xs font-medium px-2.5 py-0.5 rounded-full",
+                            isEnrolled 
+                                ? "bg-emerald-100 text-emerald-700" 
+                                : course.isFree 
+                                    ? "bg-emerald-100 text-emerald-700" 
+                                    : "bg-indigo-100 text-indigo-700"
+                        )}>
+                           {isEnrolled ? "Enrolled" : course.isFree ? "Free Access" : `Premium — ₹${course.price}`}
+                        </span>
                     </div>
                 </div>
             </div>
 
-            <div className="container mx-auto px-4 py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                     
                     {/* Sidebar Tabs */}
@@ -151,46 +155,55 @@ export default function CourseView() {
                         <button
                             onClick={() => setActiveTab("videos")}
                             className={cn(
-                                "w-full flex items-center justify-between p-4 rounded-xl transition-all font-bold text-sm",
+                                "w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 font-medium text-sm cursor-pointer",
                                 activeTab === "videos" 
-                                    ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]" 
-                                    : "bg-white text-zinc-600 hover:bg-zinc-100 border border-zinc-200"
+                                    ? "bg-indigo-50 text-indigo-600 border-2 border-indigo-200" 
+                                    : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
                             )}
                         >
                             <span className="flex items-center gap-3">
                                 <PlayCircle className="h-5 w-5" /> All Videos
                             </span>
-                            <Badge className={cn(activeTab === "videos" ? "bg-white/20" : "bg-zinc-100 text-zinc-500")}>
+                            <span className={cn(
+                                "inline-flex items-center justify-center h-6 min-w-[1.5rem] px-1.5 rounded-full text-xs font-semibold",
+                                activeTab === "videos" ? "bg-indigo-200/60 text-indigo-700" : "bg-gray-100 text-gray-500"
+                            )}>
                                 {lessonsToShow?.length || 0}
-                            </Badge>
+                            </span>
                         </button>
 
                         <button
                             onClick={() => setActiveTab("resources")}
                             className={cn(
-                                "w-full flex items-center justify-between p-4 rounded-xl transition-all font-bold text-sm",
+                                "w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 font-medium text-sm cursor-pointer",
                                 activeTab === "resources" 
-                                    ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]" 
-                                    : "bg-white text-zinc-600 hover:bg-zinc-100 border border-zinc-200"
+                                    ? "bg-indigo-50 text-indigo-600 border-2 border-indigo-200" 
+                                    : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
                             )}
                         >
                             <span className="flex items-center gap-3">
                                 <FileText className="h-5 w-5" /> Resources
                             </span>
-                            <Badge className={cn(activeTab === "resources" ? "bg-white/20" : "bg-zinc-100 text-zinc-500")}>
+                            <span className={cn(
+                                "inline-flex items-center justify-center h-6 min-w-[1.5rem] px-1.5 rounded-full text-xs font-semibold",
+                                activeTab === "resources" ? "bg-indigo-200/60 text-indigo-700" : "bg-gray-100 text-gray-500"
+                            )}>
                                 {resourcesToShow?.length || 0}
-                            </Badge>
+                            </span>
                         </button>
 
                         {!isEnrolled && !course.isFree && (
-                            <Card className="mt-8 border-none bg-gradient-to-br from-zinc-900 to-zinc-800 text-white overflow-hidden p-6">
+                            <div className="mt-6 bg-gradient-to-br from-indigo-600 to-indigo-800 text-white rounded-xl p-6 shadow-lg">
                                 <h4 className="font-bold mb-2">Unlock Full Course</h4>
-                                <p className="text-zinc-400 text-xs mb-6">Join thousands of students and get lifetime access to all assets.</p>
-                                <Button onClick={handleEnroll} className="w-full bg-primary hover:bg-primary/90 font-bold group">
+                                <p className="text-indigo-200 text-xs mb-6">Join thousands of students and get lifetime access to all assets.</p>
+                                <button 
+                                    onClick={handleEnroll} 
+                                    className="w-full bg-white text-indigo-700 hover:bg-indigo-50 font-semibold rounded-lg px-5 py-2.5 transition-colors cursor-pointer flex items-center justify-center gap-2 group"
+                                >
                                     Enroll for ₹{course.price}
-                                    <ChevronRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                                </Button>
-                            </Card>
+                                    <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                                </button>
+                            </div>
                         )}
                     </div>
 
@@ -199,34 +212,34 @@ export default function CourseView() {
                         {activeTab === "videos" ? (
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {/* Video List on Left */}
-                                <div className="md:col-span-1 space-y-3 max-h-[70vh] overflow-y-auto pr-2">
-                                    <h3 className="text-sm font-black text-zinc-400 uppercase tracking-widest mb-4">Curriculum</h3>
+                                <div className="md:col-span-1 space-y-2 max-h-[70vh] overflow-y-auto pr-2 scrollbar-thin">
+                                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Curriculum</h3>
                                     {lessonsToShow?.map((lesson, idx) => (
                                         <button
                                             key={lesson.id}
                                             onClick={() => setSelectedLesson(lesson)}
                                             className={cn(
-                                                "w-full flex items-start text-left p-4 rounded-2xl border transition-all group",
+                                                "w-full flex items-start text-left p-3 rounded-xl border transition-all duration-200 group cursor-pointer",
                                                 selectedLesson?.id === lesson.id 
-                                                    ? "bg-white border-primary border-2 shadow-md shadow-primary/5" 
-                                                    : "bg-white border-zinc-100 hover:border-zinc-300"
+                                                    ? "bg-white border-indigo-300 border-2 shadow-sm" 
+                                                    : "bg-white border-gray-100 hover:border-gray-300"
                                             )}
                                         >
-                                            <div className="mr-3 mt-1 h-6 w-6 rounded-full bg-zinc-50 flex items-center justify-center shrink-0">
-                                                <span className="text-[10px] font-black text-zinc-400">{idx + 1}</span>
+                                            <div className="mr-3 mt-0.5 h-6 w-6 rounded-full bg-gray-50 flex items-center justify-center shrink-0">
+                                                <span className="text-[10px] font-bold text-gray-400">{idx + 1}</span>
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className={cn(
-                                                    "text-sm font-bold truncate",
-                                                    selectedLesson?.id === lesson.id ? "text-primary" : "text-zinc-800"
+                                                    "text-sm font-medium truncate",
+                                                    selectedLesson?.id === lesson.id ? "text-indigo-600" : "text-gray-800"
                                                 )}>{lesson.title}</p>
                                                 <div className="flex items-center gap-2 mt-1">
-                                                    <PlayCircle className="h-3 w-3 text-zinc-400" />
-                                                    <span className="text-[10px] font-bold text-zinc-400">{lesson.duration || 10} min</span>
+                                                    <PlayCircle className="h-3 w-3 text-gray-400" />
+                                                    <span className="text-[10px] font-medium text-gray-400">{lesson.duration || 10} min</span>
                                                 </div>
                                             </div>
                                             {!canAccess && (
-                                                <Lock className="h-3 w-3 text-zinc-300 ml-2 mt-1" />
+                                                <Lock className="h-3 w-3 text-gray-300 ml-2 mt-1" />
                                             )}
                                         </button>
                                     ))}
@@ -234,7 +247,7 @@ export default function CourseView() {
 
                                 {/* Main Player View */}
                                 <div className="md:col-span-2 space-y-6">
-                                    <div className="aspect-video bg-zinc-900 rounded-3xl overflow-hidden shadow-2xl relative border border-zinc-200">
+                                    <div className="aspect-video bg-gray-900 rounded-xl overflow-hidden shadow-xl relative border border-gray-200">
                                         {canAccess ? (
                                             selectedLesson?.videoUrl ? (
                                                 <video 
@@ -245,40 +258,43 @@ export default function CourseView() {
                                                 />
                                             ) : (
                                                 <div className="flex flex-col items-center justify-center h-full text-white p-12 text-center">
-                                                    <PlayCircle className="h-12 w-12 text-zinc-700 mb-4" />
-                                                    <p className="text-zinc-500 font-bold">No video source provided for this lesson.</p>
+                                                    <PlayCircle className="h-12 w-12 text-gray-600 mb-4" />
+                                                    <p className="text-gray-400 font-medium">No video source provided for this lesson.</p>
                                                 </div>
                                             )
                                         ) : (
-                                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-zinc-900/40 backdrop-blur-md text-white p-12 text-center">
-                                                <div className="h-20 w-20 bg-zinc-800 rounded-3xl flex items-center justify-center mb-6 shadow-2xl ring-1 ring-zinc-700">
-                                                    <Lock className="h-10 w-10 text-zinc-500" />
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900/60 backdrop-blur-md text-white p-12 text-center">
+                                                <div className="h-16 w-16 bg-gray-800 rounded-xl flex items-center justify-center mb-6 shadow-xl ring-1 ring-gray-700">
+                                                    <Lock className="h-8 w-8 text-gray-500" />
                                                 </div>
-                                                <h3 className="text-2xl font-black mb-2">Locked Curriculum</h3>
-                                                <p className="text-zinc-400 text-sm max-w-xs mx-auto mb-8">Access all {lessonsToShow?.length} video modules and career coaching.</p>
-                                                <Button onClick={handleEnroll} className="bg-primary hover:bg-primary/90 text-white font-black h-14 px-12 rounded-2xl shadow-xl active:scale-95 transition-all">
+                                                <h3 className="text-2xl font-bold mb-2">Locked Content</h3>
+                                                <p className="text-gray-400 text-sm max-w-xs mx-auto mb-8">Access all {lessonsToShow?.length} video modules and resources.</p>
+                                                <button 
+                                                    onClick={handleEnroll} 
+                                                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-8 rounded-xl shadow-lg transition-all cursor-pointer"
+                                                >
                                                     Enroll Now
-                                                </Button>
+                                                </button>
                                             </div>
                                         )}
                                     </div>
                                     
-                                    <div className="bg-white rounded-3xl p-8 border border-zinc-100 shadow-sm">
-                                        <h2 className="text-2xl font-black text-zinc-900 mb-4">{selectedLesson?.title || course.title}</h2>
-                                        <p className="text-zinc-600 leading-relaxed">{course.description}</p>
+                                    <div className="bg-white rounded-xl p-6 border border-gray-100 shadow-sm">
+                                        <h2 className="text-xl font-bold text-gray-900 mb-3">{selectedLesson?.title || course.title}</h2>
+                                        <p className="text-gray-600 leading-relaxed text-sm">{course.description}</p>
                                         
-                                        <div className="grid grid-cols-3 gap-6 mt-10 pt-10 border-t border-zinc-50">
+                                        <div className="grid grid-cols-3 gap-6 mt-8 pt-6 border-t border-gray-100">
                                              <div className="space-y-1">
-                                                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Level</p>
-                                                <p className="font-bold text-sm">Intermediate</p>
+                                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Level</p>
+                                                <p className="font-semibold text-sm text-gray-900">Intermediate</p>
                                              </div>
                                              <div className="space-y-1">
-                                                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Certificate</p>
-                                                <p className="font-bold text-sm">Included</p>
+                                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Certificate</p>
+                                                <p className="font-semibold text-sm text-gray-900">Included</p>
                                              </div>
                                              <div className="space-y-1">
-                                                <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Support</p>
-                                                <p className="font-bold text-sm">Priority Q&A</p>
+                                                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Support</p>
+                                                <p className="font-semibold text-sm text-gray-900">Priority Q&A</p>
                                              </div>
                                         </div>
                                     </div>
@@ -287,37 +303,39 @@ export default function CourseView() {
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {resourcesToShow?.map((res) => (
-                                    <Card key={res.id} className="group overflow-hidden border-zinc-100 transition-all hover:shadow-xl hover:-translate-y-1 rounded-3xl bg-white">
-                                        <CardContent className="p-6">
-                                            <div className="flex items-center justify-between mb-6">
-                                                <div className="h-12 w-12 rounded-2xl bg-primary/5 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                    <div key={res.id} className="group bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200">
+                                        <div className="p-6">
+                                            <div className="flex items-center justify-between mb-4">
+                                                <div className="h-12 w-12 rounded-xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform">
                                                     <FileText className="h-6 w-6" />
                                                 </div>
-                                                <Badge variant="outline" className="text-[9px] font-black uppercase bg-zinc-50">{res.type}</Badge>
+                                                <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600 uppercase">{res.type}</span>
                                             </div>
-                                            <h4 className="font-bold text-zinc-900 mb-2 truncate">{res.name}</h4>
-                                            <p className="text-zinc-500 text-xs mb-6">Download the comprehensive {res.name} guide for this course.</p>
+                                            <h4 className="font-semibold text-gray-900 mb-1 truncate">{res.name}</h4>
+                                            <p className="text-gray-500 text-xs mb-4">Download the comprehensive {res.name} guide.</p>
                                             
                                             {(canAccess || res.isFree) ? (
-                                                <Button asChild variant="secondary" className="w-full rounded-xl h-12 font-bold group/btn">
-                                                    <a href={res.url} target="_blank" rel="noopener noreferrer">
-                                                        Download Asset
-                                                        <Download className="h-4 w-4 ml-2 group-hover/btn:scale-125 transition-transform" />
-                                                    </a>
-                                                </Button>
+                                                <a 
+                                                    href={res.url} 
+                                                    target="_blank" 
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center justify-center gap-2 w-full bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg px-5 py-2.5 transition-colors"
+                                                >
+                                                    Download <Download className="h-4 w-4" />
+                                                </a>
                                             ) : (
-                                                <Button disabled className="w-full rounded-xl h-12 bg-zinc-50 text-zinc-400 font-bold">
-                                                    <Lock className="h-4 w-4 mr-2" /> Locked Asset
-                                                </Button>
+                                                <button disabled className="w-full bg-gray-50 text-gray-400 font-medium rounded-lg px-5 py-2.5 cursor-not-allowed flex items-center justify-center gap-2">
+                                                    <Lock className="h-4 w-4" /> Locked
+                                                </button>
                                             )}
-                                        </CardContent>
-                                    </Card>
+                                        </div>
+                                    </div>
                                 ))}
 
                                 {resourcesToShow?.length === 0 && (
-                                    <div className="col-span-full py-20 text-center bg-white rounded-3xl border-2 border-dashed border-zinc-100">
-                                        <FileText className="h-12 w-12 text-zinc-200 mx-auto mb-4" />
-                                        <p className="text-zinc-400 font-bold">Safe! No resources attached to this curriculum yet.</p>
+                                    <div className="col-span-full py-20 text-center bg-white rounded-xl border-2 border-dashed border-gray-200">
+                                        <FileText className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                                        <p className="text-gray-500 font-medium">No resources attached to this course yet.</p>
                                     </div>
                                 )}
                             </div>

@@ -20,6 +20,7 @@ import AdminUsers from "./pages/admin/Users";
 import AdminCourses from "./pages/admin/Courses";
 import AdminWebinars from "./pages/admin/Webinars";
 import AdminFranchise from "./pages/admin/Franchise";
+import AdminConsultancy from "./pages/admin/Consultancy";
 import AdminSettings from "./pages/admin/Settings";
 import StudentProfile from "./pages/student/Profile";
 import { useAuthStore } from "./store/auth";
@@ -61,6 +62,7 @@ function App() {
             <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/courses" element={<AdminCourses />} />
             <Route path="/admin/webinars" element={<AdminWebinars />} />
+            <Route path="/admin/consultancy" element={<AdminConsultancy />} />
             <Route path="/admin/franchise" element={<AdminFranchise />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
           </Route>

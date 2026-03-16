@@ -22,6 +22,8 @@ import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 
+import { authService } from "@/services/auth.service";
+
 const StudentProfile = () => {
     const user: any = useAuthStore((s) => s.user);
     const setUser = (useAuthStore((s) => s) as any).setUser;
@@ -48,9 +50,7 @@ const StudentProfile = () => {
     const onSubmit = async (data: any) => {
         setLoading(true);
         try {
-            const res = await api.patch(`/auth/users/${user.id}`, {
-                profile: data
-            });
+            const res = await authService.updateProfile(user.id, data);
             setUser({ ...user, profile: res.user.profile });
             toast.success("Profile updated successfully!");
         } catch (err) {

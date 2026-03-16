@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/lib/api";
+import { franchiseService } from "@/services/franchise.service";
+import { toast } from "sonner";
 
 export default function Franchise() {
     const [form, setForm] = useState({
@@ -26,10 +27,11 @@ export default function Franchise() {
         e.preventDefault();
         setIsSubmitting(true);
         try {
-            await api.post("/franchise/inquiry", form);
+            await franchiseService.createInquiry(form);
             setSubmitted(true);
+            toast.success("Inquiry submitted successfully!");
         } catch (err: any) {
-            alert(err.message || "Failed to submit inquiry. Please try again.");
+            toast.error(err.message || "Failed to submit inquiry. Please try again.");
         } finally {
             setIsSubmitting(false);
         }

@@ -33,10 +33,11 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { CourseModal } from "@/components/admin/CourseModal";
 import { CourseCategoryModal } from "@/components/admin/CourseCategoryModal";
+import { courseService } from "@/services/course.service";
+import { toast } from "sonner";
 
 interface CourseRecord {
     id: string;
@@ -74,10 +75,11 @@ const AdminCourses = () => {
         else setIsRefreshing(true);
         
         try {
-            const res = await api.get("/courses");
+            const res = await courseService.getAll();
             setCourses(res.courses || []);
         } catch (err) {
             console.error(err);
+            toast.error("Failed to fetch courses");
         } finally {
             setLoading(false);
             setIsRefreshing(false);
@@ -87,11 +89,12 @@ const AdminCourses = () => {
     const handleDelete = async (id: string) => {
         if (!confirm("Are you sure you want to delete this course?")) return;
         try {
-            await api.delete(`/courses/${id}`);
+            await courseService.delete(id);
             setCourses(courses.filter(c => c.id !== id));
+            toast.success("Course deleted successfully");
         } catch (err) {
             console.error(err);
-            alert("Failed to delete course");
+            toast.error("Failed to delete course");
         }
     };
 
@@ -114,27 +117,27 @@ const AdminCourses = () => {
         <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Course Management</h1>
-                    <p className="text-sm text-zinc-500 font-medium mt-1">Create, edit, and organize your academy's curriculum.</p>
+                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Course Management</h1>
+                    <p className="text-sm text-gray-500 font-medium mt-1">Create, edit, and organize your academy's curriculum.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <Button 
                         variant="outline" 
                         size="icon" 
-                        className="h-11 w-11 rounded-xl border-zinc-200"
+                        className="h-11 w-11 rounded-xl border-gray-200"
                         onClick={() => fetchCourses(true)}
                         disabled={isRefreshing || loading}
                     >
-                        <RefreshCw className={cn("h-4 w-4 text-zinc-500", (isRefreshing || loading) && "animate-spin")} />
+                        <RefreshCw className={cn("h-4 w-4 text-gray-500", (isRefreshing || loading) && "animate-spin")} />
                     </Button>
                     <Button 
                         variant="outline"
-                        className="h-11 rounded-xl font-bold border-zinc-200"
+                        className="h-11 rounded-xl font-bold border-gray-200"
                         onClick={() => setIsCategoryModalOpen(true)}
                     >
                         Add Category
                     </Button>
-                    <Button className="h-11 rounded-xl font-bold shadow-lg shadow-primary/10" onClick={openCreateModal}>
+                    <Button className="h-11 rounded-xl font-bold shadow-lg shadow-indigo-600/10" onClick={openCreateModal}>
                         <Plus className="h-4 w-4 mr-2" /> Create New Course
                     </Button>
                 </div>
@@ -147,7 +150,7 @@ const AdminCourses = () => {
                             <BookOpen className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Published</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Published</p>
                             {loading ? (
                                 <Skeleton className="h-7 w-12 mt-1 rounded-lg" />
                             ) : (
@@ -162,7 +165,7 @@ const AdminCourses = () => {
                             <Layers className="h-5 w-5 text-orange-600" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Total Lessons</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Lessons</p>
                             {loading ? (
                                 <Skeleton className="h-7 w-12 mt-1 rounded-lg" />
                             ) : (
@@ -179,7 +182,7 @@ const AdminCourses = () => {
                             <BarChart className="h-5 w-5 text-blue-600" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Enrollments</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Enrollments</p>
                             {loading ? (
                                 <Skeleton className="h-7 w-12 mt-1 rounded-lg" />
                             ) : (
@@ -195,10 +198,10 @@ const AdminCourses = () => {
             <Card className="border-none shadow-sm bg-white overflow-hidden">
                 <CardHeader className="p-8 pb-4">
                     <div className="relative max-w-md">
-                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+                        <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
                         <Input
                             placeholder="Search courses..."
-                            className="pl-10 h-10 bg-zinc-50 border-zinc-100 focus:bg-white transition-all rounded-xl"
+                            className="pl-10 h-10 bg-gray-50 border-gray-100 focus:bg-white transition-all rounded-xl"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
@@ -207,19 +210,19 @@ const AdminCourses = () => {
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
                         <Table>
-                            <TableHeader className="bg-zinc-50/50">
-                                <TableRow className="border-zinc-100 hover:bg-transparent">
-                                    <TableHead className="font-bold text-zinc-900 h-14 pl-8">Course Info</TableHead>
-                                    <TableHead className="font-bold text-zinc-900">Category</TableHead>
-                                    <TableHead className="font-bold text-zinc-900">Price/Status</TableHead>
-                                    <TableHead className="font-bold text-zinc-900">Content</TableHead>
+                            <TableHeader className="bg-gray-50/50">
+                                <TableRow className="border-gray-100 hover:bg-transparent">
+                                    <TableHead className="font-bold text-gray-900 h-14 pl-8">Course Info</TableHead>
+                                    <TableHead className="font-bold text-gray-900">Category</TableHead>
+                                    <TableHead className="font-bold text-gray-900">Price/Status</TableHead>
+                                    <TableHead className="font-bold text-gray-900">Content</TableHead>
                                     <TableHead className="h-14 pr-8 text-right"></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {loading ? (
                                     Array.from({ length: 5 }).map((_, i) => (
-                                        <TableRow key={i} className="border-zinc-100">
+                                        <TableRow key={i} className="border-gray-100">
                                             <TableCell className="pl-8 py-5">
                                                 <div className="flex items-center gap-4">
                                                     <Skeleton className="h-12 w-12 rounded-xl" />
@@ -239,30 +242,30 @@ const AdminCourses = () => {
                                     <TableRow>
                                         <TableCell colSpan={5} className="h-64 text-center">
                                             <div className="flex flex-col items-center justify-center gap-3">
-                                                <div className="h-12 w-12 rounded-2xl bg-zinc-50 flex items-center justify-center">
-                                                    <Search className="h-6 w-6 text-zinc-300" />
+                                                <div className="h-12 w-12 rounded-xl bg-gray-50 flex items-center justify-center">
+                                                    <Search className="h-6 w-6 text-gray-300" />
                                                 </div>
-                                                <p className="text-sm font-bold text-zinc-500">No courses found</p>
-                                                <p className="text-xs text-zinc-400">Try adjusting your search query</p>
+                                                <p className="text-sm font-bold text-gray-500">No courses found</p>
+                                                <p className="text-xs text-gray-400">Try adjusting your search query</p>
                                             </div>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     filteredCourses.map((course) => (
-                                        <TableRow key={course.id} className="border-zinc-100 hover:bg-zinc-50/50 transition-colors group">
+                                        <TableRow key={course.id} className="border-gray-100 hover:bg-gray-50/50 transition-colors group">
                                         <TableCell className="pl-8 py-5">
                                             <div className="flex items-center gap-4">
-                                                <div className="h-12 w-12 rounded-xl bg-zinc-100 overflow-hidden shrink-0 border border-zinc-200">
+                                                <div className="h-12 w-12 rounded-xl bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
                                                     <div className="h-full w-full flex items-center justify-center">
-                                                        <BookOpen className="h-5 w-5 text-zinc-400" />
+                                                        <BookOpen className="h-5 w-5 text-gray-400" />
                                                     </div>
                                                 </div>
                                                 <div className="min-w-0">
-                                                    <p className="text-sm font-bold text-zinc-900 leading-tight mb-1 truncate max-w-[200px]">
+                                                    <p className="text-sm font-bold text-gray-900 leading-tight mb-1 truncate max-w-[200px]">
                                                         {course.title}
                                                     </p>
-                                                    <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">
-                                                        {course.level} � {course.trainer?.profile ? `${course.trainer.profile.firstName} ${course.trainer.profile.lastName}` : "No Instructor"}
+                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+                                                        {course.level} • {course.trainer?.profile ? `${course.trainer.profile.firstName} ${course.trainer.profile.lastName}` : "No Instructor"}
                                                     </p>
                                                 </div>
                                             </div>
@@ -274,16 +277,16 @@ const AdminCourses = () => {
                                         </TableCell>
                                         <TableCell>
                                             <div>
-                                                <p className="text-sm font-bold text-zinc-900">
-                                                    {course.isFree ? "Free" : `?${course.price}`}
+                                                <p className="text-sm font-bold text-gray-900">
+                                                    {course.isFree ? "Free" : `₹${course.price}`}
                                                 </p>
-                                                <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-tighter">
+                                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-tighter">
                                                     Lifetime Access
                                                 </p>
                                             </div>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex items-center gap-4 text-zinc-400">
+                                            <div className="flex items-center gap-4 text-gray-400">
                                                 <div className="flex items-center gap-1.5 tooltip" title="Videos">
                                                     <Video className="h-3.5 w-3.5" />
                                                     <span className="text-xs font-bold">{course._count?.lessons || 0}</span>
@@ -297,25 +300,25 @@ const AdminCourses = () => {
                                         <TableCell className="pr-8 text-right">
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-zinc-100 rounded-lg">
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-100 rounded-lg">
                                                         <MoreVertical className="h-4 w-4" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="end" className="w-48 rounded-xl border-zinc-200">
-                                                    <DropdownMenuLabel className="text-[10px] font-black uppercase text-zinc-400 tracking-widest p-3">Management</DropdownMenuLabel>
+                                                <DropdownMenuContent align="end" className="w-48 rounded-xl border-gray-200">
+                                                    <DropdownMenuLabel className="text-[10px] font-black uppercase text-gray-400 tracking-widest p-3">Management</DropdownMenuLabel>
                                                     <DropdownMenuItem className="p-3 gap-3 cursor-pointer" onClick={() => alert("Viewing course...")}>
-                                                        <Eye className="h-4 w-4 text-zinc-400" />
+                                                        <Eye className="h-4 w-4 text-gray-400" />
                                                         <span className="text-sm font-medium">View Public</span>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem className="p-3 gap-3 cursor-pointer" onClick={() => openEditModal(course)}>
-                                                        <Edit className="h-4 w-4 text-zinc-400" />
+                                                        <Edit className="h-4 w-4 text-gray-400" />
                                                         <span className="text-sm font-medium">Edit Details</span>
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem className="p-3 gap-3 cursor-pointer" onClick={() => alert("Managing lessons...")}>
-                                                        <Layers className="h-4 w-4 text-zinc-400" />
+                                                        <Layers className="h-4 w-4 text-gray-400" />
                                                         <span className="text-sm font-medium">Manage Content</span>
                                                     </DropdownMenuItem>
-                                                    <DropdownMenuItem className="p-3 gap-3 cursor-pointer text-rose-600 hover:bg-rose-50" onClick={() => handleDelete(course.id)}>
+                                                    <DropdownMenuItem className="p-3 gap-3 cursor-pointer text-red-600 hover:bg-red-50" onClick={() => handleDelete(course.id)}>
                                                         <Trash2 className="h-4 w-4" />
                                                         <span className="text-sm font-medium">Delete Course</span>
                                                     </DropdownMenuItem>
@@ -323,7 +326,7 @@ const AdminCourses = () => {
                                             </DropdownMenu>
                                         </TableCell>
                                     </TableRow>
-                                ))
+                                    ))
                                 )}
                             </TableBody>
                         </Table>

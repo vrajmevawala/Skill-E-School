@@ -33,8 +33,9 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { api } from "@/lib/api";
+import { franchiseService } from "@/services/franchise.service";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 interface FranchiseInquiry {
     id: string;
@@ -62,10 +63,11 @@ const FranchiseManager = () => {
         else setIsRefreshing(true);
 
         try {
-            const res = await api.get("/franchise/admin/inquiries");
+            const res = await franchiseService.getInquiries();
             setInquiries(res.inquiries || []);
         } catch (err) {
             console.error(err);
+            toast.error("Failed to fetch inquiries");
         } finally {
             setLoading(false);
             setIsRefreshing(false);
@@ -74,11 +76,12 @@ const FranchiseManager = () => {
 
     const handleUpdateStatus = async (id: string, status: string) => {
         try {
-            await api.patch(`/franchise/admin/inquiries/${id}`, { status });
-            fetchInquiries(true);
+            await franchiseService.updateInquiry(id, { status });
+            toast.success(`Inquiry status updated to ${status}`);
+            fetchInquiries(silent = true);
         } catch (err) {
             console.error(err);
-            alert("Failed to update status");
+            toast.error("Failed to update status");
         }
     };
 
@@ -92,20 +95,20 @@ const FranchiseManager = () => {
         <div className="space-y-8 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight text-zinc-900">Franchise Management</h1>
-                    <p className="text-sm text-zinc-500 font-medium mt-1">Review inquiries and manage franchise partner relations.</p>
+                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Franchise Management</h1>
+                    <p className="text-sm text-gray-500 font-medium mt-1">Review inquiries and manage franchise partner relations.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <Button 
                         variant="outline" 
                         size="icon" 
-                        className="h-11 w-11 rounded-xl border-zinc-200"
+                        className="h-11 w-11 rounded-xl border-gray-200"
                         onClick={() => fetchInquiries(true)}
                         disabled={isRefreshing || loading}
                     >
-                        <RefreshCw className={cn("h-4 w-4 text-zinc-500", (isRefreshing || loading) && "animate-spin")} />
+                        <RefreshCw className={cn("h-4 w-4 text-gray-500", (isRefreshing || loading) && "animate-spin")} />
                     </Button>
-                    <Button className="h-11 rounded-xl font-bold shadow-lg shadow-primary/10" onClick={() => alert("Generating report...")}>
+                    <Button className="h-11 rounded-xl font-bold shadow-lg shadow-indigo-600/10" onClick={() => alert("Generating report...")}>
                         <TrendingUp className="h-4 w-4 mr-2" /> Performance Report
                     </Button>
                 </div>
@@ -114,11 +117,11 @@ const FranchiseManager = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <Card className="border-none shadow-sm bg-white">
                     <CardContent className="p-6 flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-2xl bg-orange-50 flex items-center justify-center">
+                        <div className="h-12 w-12 rounded-xl bg-orange-50 flex items-center justify-center">
                             <Clock className="h-6 w-6 text-orange-600" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Total Inquiries</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Total Inquiries</p>
                             {loading ? (
                                 <Skeleton className="h-8 w-12 rounded-lg" />
                             ) : (
@@ -129,11 +132,11 @@ const FranchiseManager = () => {
                 </Card>
                 <Card className="border-none shadow-sm bg-white">
                     <CardContent className="p-6 flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-2xl bg-emerald-50 flex items-center justify-center">
+                        <div className="h-12 w-12 rounded-xl bg-emerald-50 flex items-center justify-center">
                             <CheckCircle2 className="h-6 w-6 text-emerald-600" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Approved Partners</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Approved Partners</p>
                             {loading ? (
                                 <Skeleton className="h-8 w-12 rounded-lg" />
                             ) : (
@@ -144,11 +147,11 @@ const FranchiseManager = () => {
                 </Card>
                 <Card className="border-none shadow-sm bg-white">
                     <CardContent className="p-6 flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-2xl bg-blue-50 flex items-center justify-center">
+                        <div className="h-12 w-12 rounded-xl bg-blue-50 flex items-center justify-center">
                             <DollarSign className="h-6 w-6 text-blue-600" />
                         </div>
                         <div>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Franchise Revenue</p>
+                            <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">Franchise Revenue</p>
                             {loading ? (
                                 <Skeleton className="h-8 w-12 rounded-lg" />
                             ) : (
@@ -165,15 +168,15 @@ const FranchiseManager = () => {
                         <h2 className="text-lg font-bold">Recent Inquiries</h2>
                         <div className="flex items-center gap-3">
                             <div className="relative w-64">
-                                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-zinc-400" />
+                                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-gray-400" />
                                 <Input 
                                     placeholder="Search location or name..." 
-                                    className="pl-9 h-9 bg-zinc-50 border-zinc-100 rounded-lg text-xs" 
+                                    className="pl-9 h-9 bg-gray-50 border-gray-100 rounded-lg text-xs" 
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                 />
                             </div>
-                            <Button variant="outline" size="sm" className="h-9 font-bold border-zinc-200" onClick={() => alert("Filter options...")}>
+                            <Button variant="outline" size="sm" className="h-9 font-bold border-gray-200" onClick={() => alert("Filter options...")}>
                                 <Filter className="h-3.5 w-3.5 mr-2" /> Filter
                             </Button>
                         </div>
@@ -182,20 +185,20 @@ const FranchiseManager = () => {
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
                         <Table>
-                            <TableHeader className="bg-zinc-50/50">
-                                <TableRow className="border-zinc-100">
-                                    <TableHead className="font-bold text-zinc-900 h-14 pl-8">Applicant</TableHead>
-                                    <TableHead className="font-bold text-zinc-900">Location</TableHead>
-                                    <TableHead className="font-bold text-zinc-900">Status</TableHead>
-                                    <TableHead className="font-bold text-zinc-900">Contact</TableHead>
-                                    <TableHead className="font-bold text-zinc-900">Applied Date</TableHead>
+                            <TableHeader className="bg-gray-50/50">
+                                <TableRow className="border-gray-100">
+                                    <TableHead className="font-bold text-gray-900 h-14 pl-8">Applicant</TableHead>
+                                    <TableHead className="font-bold text-gray-900">Location</TableHead>
+                                    <TableHead className="font-bold text-gray-900">Status</TableHead>
+                                    <TableHead className="font-bold text-gray-900">Contact</TableHead>
+                                    <TableHead className="font-bold text-gray-900">Applied Date</TableHead>
                                     <TableHead className="h-14 pr-8 text-right"></TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {loading ? (
                                     Array.from({ length: 5 }).map((_, i) => (
-                                        <TableRow key={i} className="border-zinc-100">
+                                        <TableRow key={i} className="border-gray-100">
                                             <TableCell className="pl-8 py-5">
                                                 <div className="space-y-2">
                                                     <Skeleton className="h-4 w-32" />
@@ -218,26 +221,26 @@ const FranchiseManager = () => {
                                     <TableRow>
                                         <TableCell colSpan={6} className="h-64 text-center">
                                             <div className="flex flex-col items-center justify-center gap-3">
-                                                <div className="h-12 w-12 rounded-2xl bg-zinc-50 items-center justify-center flex">
-                                                    <Search className="h-6 w-6 text-zinc-300" />
+                                                <div className="h-12 w-12 rounded-xl bg-gray-50 items-center justify-center flex">
+                                                    <Search className="h-6 w-6 text-gray-300" />
                                                 </div>
-                                                <p className="text-sm font-bold text-zinc-500">No inquiries found</p>
-                                                <p className="text-xs text-zinc-400">Try adjusting your search query</p>
+                                                <p className="text-sm font-bold text-gray-500">No inquiries found</p>
+                                                <p className="text-xs text-gray-400">Try adjusting your search query</p>
                                             </div>
                                         </TableCell>
                                     </TableRow>
                                 ) : (
                                     filteredInquiries.map((inquiry) => (
-                                        <TableRow key={inquiry.id} className="border-zinc-100 hover:bg-zinc-50/50 transition-colors">
+                                        <TableRow key={inquiry.id} className="border-gray-100 hover:bg-gray-50/50 transition-colors">
                                             <TableCell className="pl-8 py-5">
                                                 <div>
-                                                    <p className="text-sm font-bold text-zinc-900">{inquiry.firstName} {inquiry.lastName}</p>
-                                                    <p className="text-[10px] text-zinc-400 font-bold uppercase tracking-widest">Inquiry #{inquiry.id.slice(-4).toUpperCase()}</p>
+                                                    <p className="text-sm font-bold text-gray-900">{inquiry.firstName} {inquiry.lastName}</p>
+                                                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Inquiry #{inquiry.id.slice(-4).toUpperCase()}</p>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <div className="flex items-center gap-2 text-xs font-semibold text-zinc-600">
-                                                    <MapPin className="h-3.5 w-3.5 text-zinc-400" />
+                                                <div className="flex items-center gap-2 text-xs font-semibold text-gray-600">
+                                                    <MapPin className="h-3.5 w-3.5 text-gray-400" />
                                                     {inquiry.city}
                                                 </div>
                                             </TableCell>
@@ -246,42 +249,42 @@ const FranchiseManager = () => {
                                                     "text-[9px] font-black uppercase tracking-widest px-2 py-0 h-5 border-none",
                                                     inquiry.status === "PENDING" ? "bg-orange-50 text-orange-600" :
                                                         inquiry.status === "REVIEWING" ? "bg-blue-50 text-blue-600" :
-                                                            inquiry.status === "APPROVED" ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                                                            inquiry.status === "APPROVED" ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
                                                 )}>
                                                     {inquiry.status}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="flex flex-col gap-1">
-                                                    <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500">
+                                                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500">
                                                         <Phone className="h-3 w-3" /> {inquiry.phone}
                                                     </div>
-                                                    <div className="flex items-center gap-2 text-[10px] font-bold text-zinc-500">
+                                                    <div className="flex items-center gap-2 text-[10px] font-bold text-gray-500">
                                                         <Mail className="h-3 w-3" /> {inquiry.email}
                                                     </div>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <p className="text-xs font-medium text-zinc-500">{new Date(inquiry.createdAt).toLocaleDateString()}</p>
+                                                <p className="text-xs font-medium text-gray-500">{new Date(inquiry.createdAt).toLocaleDateString()}</p>
                                             </TableCell>
                                             <TableCell className="pr-8 text-right">
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-zinc-100 rounded-lg">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-gray-100 rounded-lg">
                                                             <MoreVertical className="h-4 w-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end" className="w-48 rounded-xl border-zinc-200">
-                                                        <DropdownMenuLabel className="text-[10px] font-black uppercase text-zinc-400 tracking-widest p-3">Pipeline Actions</DropdownMenuLabel>
+                                                    <DropdownMenuContent align="end" className="w-48 rounded-xl border-gray-200">
+                                                        <DropdownMenuLabel className="text-[10px] font-black uppercase text-gray-400 tracking-widest p-3">Pipeline Actions</DropdownMenuLabel>
                                                         <DropdownMenuItem className="p-3 gap-3 cursor-pointer" onClick={() => handleUpdateStatus(inquiry.id, "REVIEWING")}>
-                                                            <Clock className="h-4 w-4 text-zinc-400" />
+                                                            <Clock className="h-4 w-4 text-gray-400" />
                                                             <span className="text-sm font-medium">Mark Reviewing</span>
                                                         </DropdownMenuItem>
                                                         <DropdownMenuItem className="p-3 gap-3 cursor-pointer text-emerald-600" onClick={() => handleUpdateStatus(inquiry.id, "APPROVED")}>
                                                             <CheckCircle2 className="h-4 w-4" />
                                                             <span className="text-sm font-medium">Approve Partner</span>
                                                         </DropdownMenuItem>
-                                                        <DropdownMenuItem className="p-3 gap-3 cursor-pointer text-rose-600" onClick={() => handleUpdateStatus(inquiry.id, "REJECTED")}>
+                                                        <DropdownMenuItem className="p-3 gap-3 cursor-pointer text-red-600" onClick={() => handleUpdateStatus(inquiry.id, "REJECTED")}>
                                                             <Building2 className="h-4 w-4" />
                                                             <span className="text-sm font-medium">Reject Inquiry</span>
                                                         </DropdownMenuItem>

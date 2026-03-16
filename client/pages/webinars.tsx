@@ -4,7 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { api } from "@/lib/api";
+import { webinarService } from "@/services/webinar.service";
+import { toast } from "sonner";
+import { useAuthStore } from "@/store/auth";
 
 interface Webinar {
     id: string;
@@ -22,11 +24,12 @@ interface Webinar {
 export default function Webinars() {
     const [webinars, setWebinars] = useState<Webinar[]>([]);
     const [loading, setLoading] = useState(true);
+    const [registering, setRegistering] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchWebinars = async () => {
             try {
-                const res = await api.get("/webinars");
+                const res = await webinarService.getAll();
                 setWebinars(res.webinars || []);
             } catch {
                 setWebinars([]);
@@ -36,6 +39,18 @@ export default function Webinars() {
         };
         fetchWebinars();
     }, []);
+
+    const handleRegister = async (webinarId: string) => {
+        setRegistering(webinarId);
+        try {
+            await webinarService.register(webinarId);
+            toast.success("Successfully registered for the webinar!");
+        } catch (err: any) {
+            toast.error(err.message || "Registration failed");
+        } finally {
+            setRegistering(null);
+        }
+    };
 
     const formatDate = (dateStr: string) => {
         const d = new Date(dateStr);
@@ -168,15 +183,25 @@ export default function Webinars() {
                                                                     Register on Google Form
                                                                 </a>
                                                             </Button>
-                                                        ) : webinar.meetingUrl ? (
-                                                            <Button className="w-full" asChild>
+                                                        ) : (
+                                                            <Button 
+                                                                className="w-full" 
+                                                                onClick={() => handleRegister(webinar.id)}
+                                                                disabled={registering === webinar.id}
+                                                            >
+                                                                {registering === webinar.id ? (
+                                                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Registering...</>
+                                                                ) : (
+                                                                    "Register for Webinar"
+                                                                )}
+                                                            </Button>
+                                                        )}
+
+                                                        {webinar.meetingUrl && (
+                                                            <Button className="w-full" variant="outline" asChild>
                                                                 <a href={webinar.meetingUrl} target="_blank" rel="noopener noreferrer">
                                                                     Join Meeting
                                                                 </a>
-                                                            </Button>
-                                                        ) : (
-                                                            <Button className="w-full" disabled>
-                                                                Coming Soon
                                                             </Button>
                                                         )}
 

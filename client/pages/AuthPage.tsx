@@ -93,16 +93,20 @@ export default function AuthPage() {
 
     async function onLogin(data: z.infer<typeof loginSchema>) {
         clearError();
+        const searchParams = new URLSearchParams(location.search);
+        const shouldRedirectToCourses = searchParams.get("course") === "true";
+
         try {
             const result = await login(data.email, data.password);
             if (result.needsOtp) {
                 setEmailForOtp(data.email);
                 navigate("/verify-otp", { state: { email: data.email } });
             } else {
-                // Get the user from the store to check the role
                 const user = useAuthStore.getState().user;
                 if (user?.role === "ADMIN") {
                     navigate("/admin");
+                } else if (shouldRedirectToCourses) {
+                    navigate("/courses");
                 } else {
                     navigate("/");
                 }
@@ -133,11 +137,16 @@ export default function AuthPage() {
     async function handleOtpSubmit(code: string) {
         if (code.length !== 6) return;
         clearError();
+        const searchParams = new URLSearchParams(location.search);
+        const shouldRedirectToCourses = searchParams.get("course") === "true";
+
         try {
             await verifyOtp(emailForOtp, code);
             const user = useAuthStore.getState().user;
             if (user?.role === "ADMIN") {
                 navigate("/admin");
+            } else if (shouldRedirectToCourses) {
+                navigate("/courses");
             } else {
                 navigate("/");
             }
@@ -161,23 +170,26 @@ export default function AuthPage() {
         } catch { /* handled in store */ }
     }
 
+    const inputClass = "w-full border border-gray-300 rounded-lg px-4 py-2.5 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all bg-white";
+    const labelClass = "block text-sm font-medium text-gray-700 mb-1.5";
+
     return (
-        <div className="min-h-screen w-full flex overflow-hidden bg-background">
+        <div className="min-h-screen w-full flex overflow-hidden bg-gray-50">
             {/* Left Side - Hero Section */}
             <div className="relative hidden lg:flex w-1/2 flex-col bg-muted p-12 text-white overflow-hidden">
-                <div className="absolute inset-0 bg-zinc-950" />
+                <div className="absolute inset-0 bg-gray-900" />
                 <div className="absolute inset-0">
                     <img
                         src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=2000&auto=format&fit=crop"
                         alt="Join Skill E-School"
                         className="h-full w-full object-cover opacity-60"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
                 </div>
 
                 <div className="relative z-20 flex items-center text-2xl font-bold tracking-tight">
-                    <div className="bg-primary p-2 rounded-xl mr-3 shadow-lg shadow-primary/20">
-                        <GraduationCap className="h-8 w-8 text-black" />
+                    <div className="bg-indigo-600 p-2 rounded-xl mr-3 shadow-lg shadow-indigo-600/20">
+                        <GraduationCap className="h-8 w-8 text-white" />
                     </div>
                     <Link to="/" className="hover:opacity-80 transition-opacity">
                         Skill E-School
@@ -191,8 +203,8 @@ export default function AuthPage() {
                                 "The best investment you can make is in yourself. Unlock your potential with our expert-led courses."
                             </p>
                             <footer className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-full bg-primary/20 flex items-center justify-center border border-primary/30">
-                                    <ShieldCheck className="h-6 w-6 text-primary" />
+                                <div className="h-10 w-10 rounded-full bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
+                                    <ShieldCheck className="h-6 w-6 text-indigo-400" />
                                 </div>
                                 <div>
                                     <div className="font-semibold text-lg">Blended Learning Platform</div>
@@ -205,19 +217,19 @@ export default function AuthPage() {
             </div>
 
             {/* Right Side - Forms */}
-            <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-zinc-50 dark:bg-zinc-950 overflow-y-auto">
+            <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-gray-50 overflow-y-auto">
                 <div className="w-full max-w-[480px] space-y-8 py-8 px-2">
                     <div className="flex justify-center mb-2 lg:hidden">
-                        <div className="bg-primary p-2 rounded-xl shadow-lg shadow-primary/20 group">
-                            <GraduationCap className="h-8 w-8 text-black group-hover:scale-110 transition-transform" />
+                        <div className="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-600/20 group">
+                            <GraduationCap className="h-8 w-8 text-white group-hover:scale-110 transition-transform" />
                         </div>
                     </div>
 
                     <div className="text-center space-y-2">
-                        <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                        <h1 className="text-3xl font-bold tracking-tight text-gray-900">
                             {view === "otp" ? "Verify your email" : activeTab === "login" ? "Welcome back" : "Join the academy"}
                         </h1>
-                        <p className="text-zinc-500 dark:text-zinc-400">
+                        <p className="text-gray-500">
                             {view === "otp"
                                 ? "Enter the 6-digit code sent to your inbox"
                                 : activeTab === "login"
@@ -234,15 +246,15 @@ export default function AuthPage() {
                                 navigate(v === "login" ? "/login" : "/register");
                                 clearError();
                             }} className="w-full">
-                                <TabsList className="grid w-full grid-cols-2 p-1 bg-zinc-200/50 dark:bg-zinc-800/50 rounded-xl">
-                                    <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950 data-[state=active]:shadow-sm">Login</TabsTrigger>
-                                    <TabsTrigger value="register" className="rounded-lg data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-950 data-[state=active]:shadow-sm">Register</TabsTrigger>
+                                <TabsList className="grid w-full grid-cols-2 p-1 bg-gray-100 rounded-xl">
+                                    <TabsTrigger value="login" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-900 text-gray-500 font-medium">Login</TabsTrigger>
+                                    <TabsTrigger value="register" className="rounded-lg data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-gray-900 text-gray-500 font-medium">Register</TabsTrigger>
                                 </TabsList>
 
                                 {error && (
-                                    <div className="mt-6 p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
-                                        <div className="h-5 w-5 rounded-full bg-red-100 dark:bg-red-900/40 flex items-center justify-center text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5">!</div>
-                                        <p className="text-sm text-red-600 dark:text-red-400 font-medium">{error}</p>
+                                    <div className="mt-6 p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3 animate-in fade-in slide-in-from-top-2">
+                                        <div className="h-5 w-5 rounded-full bg-red-100 flex items-center justify-center text-red-600 flex-shrink-0 mt-0.5 text-xs font-bold">!</div>
+                                        <p className="text-sm text-red-600 font-medium">{error}</p>
                                     </div>
                                 )}
 
@@ -254,11 +266,11 @@ export default function AuthPage() {
                                                 name="email"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Email Address</FormLabel>
+                                                        <FormLabel className={labelClass}>Email Address</FormLabel>
                                                         <FormControl>
                                                             <div className="relative">
-                                                                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
-                                                                <Input placeholder="name@example.com" className="pl-10 h-11 rounded-xl bg-white dark:bg-zinc-900" {...field} />
+                                                                <Mail className="absolute left-3.5 top-3 h-4 w-4 text-gray-400" />
+                                                                <Input placeholder="name@example.com" className={cn(inputClass, "pl-10")} {...field} />
                                                             </div>
                                                         </FormControl>
                                                         <FormMessage />
@@ -270,15 +282,15 @@ export default function AuthPage() {
                                                 name="password"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Password</FormLabel>
+                                                        <FormLabel className={labelClass}>Password</FormLabel>
                                                         <FormControl>
                                                             <div className="relative">
-                                                                <Input type={showPassword ? "text" : "password"} className="pr-10 h-11 rounded-xl bg-white dark:bg-zinc-900" {...field} />
+                                                                <Input type={showPassword ? "text" : "password"} className={cn(inputClass, "pr-10")} {...field} />
                                                                 <Button
                                                                     type="button"
                                                                     variant="ghost"
                                                                     size="icon"
-                                                                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-zinc-400 hover:text-zinc-600"
+                                                                    className="absolute right-0 top-0 h-full px-3 hover:bg-transparent text-gray-400 hover:text-gray-600 cursor-pointer"
                                                                     onClick={() => setShowPassword(!showPassword)}
                                                                 >
                                                                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -289,7 +301,7 @@ export default function AuthPage() {
                                                     </FormItem>
                                                 )}
                                             />
-                                            <Button type="submit" className="w-full h-11 rounded-xl font-semibold shadow-lg shadow-primary/10" disabled={isLoading}>
+                                            <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 text-base font-semibold rounded-lg transition-colors cursor-pointer mt-2" disabled={isLoading}>
                                                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Sign In to Academy"}
                                             </Button>
                                         </form>
@@ -297,31 +309,31 @@ export default function AuthPage() {
 
                                     <div className="relative py-2">
                                         <div className="absolute inset-0 flex items-center">
-                                            <span className="w-full border-t border-zinc-200 dark:border-zinc-800" />
+                                            <span className="w-full border-t border-gray-200" />
                                         </div>
                                         <div className="relative flex justify-center text-xs uppercase">
-                                            <span className="bg-zinc-50 dark:bg-zinc-950 px-4 text-zinc-500 font-medium">Or continue with</span>
+                                            <span className="bg-gray-50 px-4 text-gray-500 font-medium">Or continue with</span>
                                         </div>
                                     </div>
 
-                                    <Button variant="outline" className="w-full h-11 rounded-xl border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm hover:bg-zinc-50 transition-colors">
-                                        <SiGoogle className="mr-3 h-4 w-4 text-zinc-900 dark:text-white" />
+                                    <Button variant="outline" className="w-full h-11 rounded-lg border-gray-300 bg-white shadow-sm hover:bg-gray-50 transition-colors text-gray-700 font-medium cursor-pointer">
+                                        <SiGoogle className="mr-3 h-4 w-4" />
                                         Google Account
                                     </Button>
                                 </TabsContent>
 
                                 <TabsContent value="register" className="space-y-6 mt-6">
                                     <Form {...registerForm}>
-                                        <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-5">
+                                        <form onSubmit={registerForm.handleSubmit(onRegister)} className="space-y-4">
                                             <div className="grid grid-cols-2 gap-4">
                                                 <FormField
                                                     control={registerForm.control}
                                                     name="firstName"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-zinc-500">First Name</FormLabel>
+                                                            <FormLabel className={labelClass}>First Name</FormLabel>
                                                             <FormControl>
-                                                                <Input placeholder="John" className="h-11 rounded-xl bg-white dark:bg-zinc-900" {...field} />
+                                                                <Input placeholder="John" className={inputClass} {...field} />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -332,9 +344,9 @@ export default function AuthPage() {
                                                     name="lastName"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Last Name</FormLabel>
+                                                            <FormLabel className={labelClass}>Last Name</FormLabel>
                                                             <FormControl>
-                                                                <Input placeholder="Doe" className="h-11 rounded-xl bg-white dark:bg-zinc-900" {...field} />
+                                                                <Input placeholder="Doe" className={inputClass} {...field} />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -342,12 +354,12 @@ export default function AuthPage() {
                                                 />
                                             </div>
 
-                                            <FormField
+                                            {/* <FormField
                                                 control={registerForm.control}
                                                 name="role"
                                                 render={({ field }) => (
                                                     <FormItem className="space-y-3">
-                                                        <FormLabel className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Join as a</FormLabel>
+                                                        <FormLabel className={labelClass}>Join as a</FormLabel>
                                                         <FormControl>
                                                             <RadioGroup
                                                                 onValueChange={field.onChange}
@@ -358,8 +370,8 @@ export default function AuthPage() {
                                                                     <FormControl>
                                                                         <RadioGroupItem value="STUDENT" className="peer sr-only" />
                                                                     </FormControl>
-                                                                    <FormLabel className="flex flex-col items-center justify-between rounded-xl border-2 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 hover:bg-zinc-50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 transition-all cursor-pointer">
-                                                                        <Users className="mb-2 h-6 w-6 text-zinc-500 peer-data-[state=checked]:text-primary" />
+                                                                    <FormLabel className="flex flex-col items-center justify-between rounded-xl border-2 border-gray-200 bg-white p-4 hover:bg-gray-50 peer-data-[state=checked]:border-indigo-600 peer-data-[state=checked]:bg-indigo-50 transition-all cursor-pointer">
+                                                                        <Users className="mb-2 h-6 w-6 text-gray-500 peer-data-[state=checked]:text-indigo-600" />
                                                                         <span className="text-sm font-semibold">Student</span>
                                                                     </FormLabel>
                                                                 </FormItem>
@@ -367,8 +379,8 @@ export default function AuthPage() {
                                                                     <FormControl>
                                                                         <RadioGroupItem value="TRAINER" className="peer sr-only" />
                                                                     </FormControl>
-                                                                    <FormLabel className="flex flex-col items-center justify-between rounded-xl border-2 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 hover:bg-zinc-50 peer-data-[state=checked]:border-primary peer-data-[state=checked]:bg-primary/5 transition-all cursor-pointer">
-                                                                        <User className="mb-2 h-6 w-6 text-zinc-500 peer-data-[state=checked]:text-primary" />
+                                                                    <FormLabel className="flex flex-col items-center justify-between rounded-xl border-2 border-gray-200 bg-white p-4 hover:bg-gray-50 peer-data-[state=checked]:border-indigo-600 peer-data-[state=checked]:bg-indigo-50 transition-all cursor-pointer">
+                                                                        <User className="mb-2 h-6 w-6 text-gray-500 peer-data-[state=checked]:text-indigo-600" />
                                                                         <span className="text-sm font-semibold">Trainer</span>
                                                                     </FormLabel>
                                                                 </FormItem>
@@ -377,18 +389,18 @@ export default function AuthPage() {
                                                         <FormMessage />
                                                     </FormItem>
                                                 )}
-                                            />
+                                            /> */}
 
                                             <FormField
                                                 control={registerForm.control}
                                                 name="email"
                                                 render={({ field }) => (
                                                     <FormItem>
-                                                        <FormLabel className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Email Address</FormLabel>
+                                                        <FormLabel className={labelClass}>Email Address</FormLabel>
                                                         <FormControl>
                                                             <div className="relative">
-                                                                <Mail className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
-                                                                <Input placeholder="john@example.com" className="pl-10 h-11 rounded-xl bg-white dark:bg-zinc-900" {...field} />
+                                                                <Mail className="absolute left-3.5 top-3 h-4 w-4 text-gray-400" />
+                                                                <Input placeholder="john@example.com" className={cn(inputClass, "pl-10")} {...field} />
                                                             </div>
                                                         </FormControl>
                                                         <FormMessage />
@@ -402,9 +414,9 @@ export default function AuthPage() {
                                                     name="password"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Password</FormLabel>
+                                                            <FormLabel className={labelClass}>Password</FormLabel>
                                                             <FormControl>
-                                                                <Input type="password" placeholder="••••••••" className="h-11 rounded-xl bg-white dark:bg-zinc-900" {...field} />
+                                                                <Input type="password" placeholder="••••••••" className={inputClass} {...field} />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -415,9 +427,9 @@ export default function AuthPage() {
                                                     name="confirmPassword"
                                                     render={({ field }) => (
                                                         <FormItem>
-                                                            <FormLabel className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Confirm</FormLabel>
+                                                            <FormLabel className={labelClass}>Confirm</FormLabel>
                                                             <FormControl>
-                                                                <Input type="password" placeholder="••••••••" className="h-11 rounded-xl bg-white dark:bg-zinc-900" {...field} />
+                                                                <Input type="password" placeholder="••••••••" className={inputClass} {...field} />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -425,7 +437,7 @@ export default function AuthPage() {
                                                 />
                                             </div>
 
-                                            <Button type="submit" className="w-full h-11 rounded-xl font-semibold shadow-lg shadow-primary/10 mt-2" disabled={isLoading}>
+                                            <Button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 text-base font-semibold rounded-lg transition-colors cursor-pointer mt-2" disabled={isLoading}>
                                                 {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : "Create Account"}
                                             </Button>
                                         </form>
@@ -435,32 +447,32 @@ export default function AuthPage() {
                         </div>
                     ) : (
                         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <Card className="border-zinc-200 dark:border-zinc-800 shadow-xl shadow-black/5 bg-white dark:bg-zinc-950 rounded-2xl overflow-hidden">
+                            <Card className="border-gray-100 shadow-xl bg-white rounded-2xl overflow-hidden">
                                 <CardHeader className="text-center pb-2">
-                                    <div className="mx-auto mb-4 w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center transform rotate-3 shadow-inner">
-                                        <Mail className="h-10 w-10 text-primary -rotate-3" />
+                                    <div className="mx-auto mb-4 w-20 h-20 bg-indigo-50 rounded-2xl flex items-center justify-center transform rotate-3 shadow-inner">
+                                        <Mail className="h-10 w-10 text-indigo-600 -rotate-3" />
                                     </div>
-                                    <CardTitle className="text-2xl font-bold tracking-tight">Security Check</CardTitle>
-                                    <CardDescription className="text-zinc-500 dark:text-zinc-400 max-w-[280px] mx-auto leading-relaxed">
+                                    <CardTitle className="text-2xl font-bold tracking-tight text-gray-900">Security Check</CardTitle>
+                                    <CardDescription className="text-gray-500 max-w-[280px] mx-auto leading-relaxed">
                                         We've sent a 6-digit verification code to
-                                        <span className="block font-semibold text-zinc-900 dark:text-zinc-100 mt-1">{emailForOtp}</span>
+                                        <span className="block font-semibold text-gray-900 mt-1">{emailForOtp}</span>
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-8 py-6">
                                     {error && (
-                                        <div className="p-4 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-100 dark:border-red-900/30 flex items-start gap-3">
-                                            <p className="text-sm text-red-600 dark:text-red-400 font-medium text-center w-full">{error}</p>
+                                        <div className="p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3">
+                                            <p className="text-sm text-red-600 font-medium text-center w-full">{error}</p>
                                         </div>
                                     )}
                                     <div className="flex justify-center scale-110 md:scale-125 py-4">
                                         <InputOTP maxLength={6} onComplete={handleOtpSubmit} disabled={isLoading}>
                                             <InputOTPGroup className="gap-2 md:gap-3">
-                                                <InputOTPSlot index={0} className="h-12 w-10 md:h-14 md:w-12 rounded-xl border-2 dark:bg-zinc-900" />
-                                                <InputOTPSlot index={1} className="h-12 w-10 md:h-14 md:w-12 rounded-xl border-2 dark:bg-zinc-900" />
-                                                <InputOTPSlot index={2} className="h-12 w-10 md:h-14 md:w-12 rounded-xl border-2 dark:bg-zinc-900" />
-                                                <InputOTPSlot index={3} className="h-12 w-10 md:h-14 md:w-12 rounded-xl border-2 dark:bg-zinc-900" />
-                                                <InputOTPSlot index={4} className="h-12 w-10 md:h-14 md:w-12 rounded-xl border-2 dark:bg-zinc-900" />
-                                                <InputOTPSlot index={5} className="h-12 w-10 md:h-14 md:w-12 rounded-xl border-2 dark:bg-zinc-900" />
+                                                <InputOTPSlot index={0} className="h-12 w-10 md:h-14 md:w-12 rounded-lg border-2 border-gray-300 focus:border-indigo-500" />
+                                                <InputOTPSlot index={1} className="h-12 w-10 md:h-14 md:w-12 rounded-lg border-2 border-gray-300 focus:border-indigo-500" />
+                                                <InputOTPSlot index={2} className="h-12 w-10 md:h-14 md:w-12 rounded-lg border-2 border-gray-300 focus:border-indigo-500" />
+                                                <InputOTPSlot index={3} className="h-12 w-10 md:h-14 md:w-12 rounded-lg border-2 border-gray-300 focus:border-indigo-500" />
+                                                <InputOTPSlot index={4} className="h-12 w-10 md:h-14 md:w-12 rounded-lg border-2 border-gray-300 focus:border-indigo-500" />
+                                                <InputOTPSlot index={5} className="h-12 w-10 md:h-14 md:w-12 rounded-lg border-2 border-gray-300 focus:border-indigo-500" />
                                             </InputOTPGroup>
                                         </InputOTP>
                                     </div>
@@ -471,7 +483,7 @@ export default function AuthPage() {
                                             size="sm"
                                             onClick={handleResend}
                                             disabled={resendCooldown > 0 || isLoading}
-                                            className="rounded-full px-6 h-10 font-medium bg-zinc-100 dark:bg-zinc-900"
+                                            className="rounded-full px-6 h-10 font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer"
                                         >
                                             <RotateCw className={cn("mr-2 h-4 w-4", isLoading && "animate-spin")} />
                                             {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : "Resend code"}
@@ -479,7 +491,7 @@ export default function AuthPage() {
                                     </div>
                                 </CardContent>
                                 <CardFooter className="pt-0 pb-6">
-                                    <Button variant="ghost" className="w-full text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100" onClick={() => navigate("/login")}>
+                                    <Button variant="ghost" className="w-full text-gray-500 hover:text-gray-900 cursor-pointer" onClick={() => navigate("/login")}>
                                         <ArrowLeft className="mr-2 h-4 w-4" />
                                         Use a different email address
                                     </Button>
@@ -489,13 +501,13 @@ export default function AuthPage() {
                     )}
 
                     <div className="text-center space-y-4 pt-4">
-                        <p className="px-8 text-xs text-muted-foreground leading-relaxed max-w-[320px] mx-auto">
+                        <p className="px-8 text-xs text-gray-400 leading-relaxed max-w-[320px] mx-auto">
                             By continuing, you agree to our{" "}
-                            <Link to="/terms" className="underline underline-offset-4 font-medium text-zinc-900 dark:text-zinc-100 hover:text-primary transition-colors">
+                            <Link to="/terms" className="underline underline-offset-4 font-medium text-gray-900 hover:text-indigo-600 transition-colors">
                                 Terms of Service
                             </Link>{" "}
                             and{" "}
-                            <Link to="/privacy" className="underline underline-offset-4 font-medium text-zinc-900 dark:text-zinc-100 hover:text-primary transition-colors">
+                            <Link to="/privacy" className="underline underline-offset-4 font-medium text-gray-900 hover:text-indigo-600 transition-colors">
                                 Privacy Policy
                             </Link>
                             .
