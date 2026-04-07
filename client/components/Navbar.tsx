@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { BookOpen, Users, Briefcase, GraduationCap, Menu, X, LogOut, User, LayoutDashboard, ChevronDown } from "lucide-react";
+import { BookOpen, Users, Briefcase, GraduationCap, Menu, X, LogOut, User, LayoutDashboard, ChevronDown, Book as BookIcon } from "lucide-react";
 import { useAuthStore } from "@/store/auth";
 import {
   DropdownMenu,
@@ -39,19 +39,18 @@ const Navbar = () => {
 
   const navLinkClass = (path: string) =>
     cn(
-      "text-sm font-medium px-3 py-2 rounded-lg transition-colors",
+      "text-base font-semibold px-4 py-2.5 rounded-lg transition-colors",
       isActive(path)
-        ? "text-indigo-600 bg-indigo-50"
-        : "text-gray-600 hover:text-indigo-600 hover:bg-indigo-50"
+        ? "text-primary bg-primary/10"
+        : "text-slate-600 hover:text-primary hover:bg-slate-50"
     );
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex h-20 md:h-24 items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2">
-          <GraduationCap className="h-7 w-7 text-indigo-600" />
-          <span className="text-xl font-bold text-indigo-600 tracking-tight">Skill E-School</span>
+          <img src="/logo-nav.png" alt="Skill E-School" className="h-12 md:h-14 w-auto object-contain" />
         </Link>
 
         {/* Desktop Navigation */}
@@ -60,17 +59,17 @@ const Navbar = () => {
             <NavigationMenuList>
               <NavigationMenuItem>
                 <NavigationMenuTrigger className={cn(
-                  "text-sm font-medium px-3 py-2 rounded-lg transition-colors bg-transparent",
+                  "text-base font-semibold px-4 py-2.5 rounded-lg transition-colors bg-transparent",
                   ["/courses", "/webinars", "/consultancy"].some(p => isActive(p))
-                    ? "text-indigo-600"
-                    : "text-gray-600 hover:text-indigo-600"
+                    ? "text-primary"
+                    : "text-slate-600 hover:text-primary"
                 )}>Programs</NavigationMenuTrigger>
                 <NavigationMenuContent>
                   <ul className="grid w-[400px] gap-3 p-4 md:w-[500px] md:grid-cols-2 lg:w-[600px]">
                     <li className="row-span-3">
                       <NavigationMenuLink asChild>
                         <Link
-                          className="flex h-full w-full select-none flex-col justify-end rounded-xl bg-gradient-to-b from-indigo-500 to-indigo-700 p-6 no-underline outline-none focus:shadow-md"
+                          className="flex h-full w-full select-none flex-col justify-end rounded-xl bg-gradient-to-b from-blue-900 to-indigo-700 p-6 no-underline outline-none focus:shadow-md"
                           to="/courses"
                         >
                           <BookOpen className="h-6 w-6 text-white" />
@@ -109,7 +108,8 @@ const Navbar = () => {
             </NavigationMenuList>
           </NavigationMenu>
 
-          <Link to="/franchise" className={navLinkClass("/franchise")}>Franchise</Link>
+          <Link to="/books" className={navLinkClass("/books")}>Books</Link>
+          <Link to="/franchise" className={navLinkClass("/franchise") }>Franchise</Link>
 
           {user?.role === "ADMIN" && (
             <Link to="/admin" className={cn(navLinkClass("/admin"), "text-indigo-600 font-semibold")}>
@@ -172,10 +172,10 @@ const Navbar = () => {
           ) : (
             <>
               <Link to="/login">
-                <Button variant="ghost" className="text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg px-4 py-2 font-medium cursor-pointer">Sign In</Button>
+                <Button variant="ghost" className="text-slate-600 hover:text-primary hover:bg-slate-50 rounded-lg px-5 py-2.5 text-base font-semibold cursor-pointer">Sign In</Button>
               </Link>
               <Link to="/register">
-                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg px-4 py-2 font-medium cursor-pointer">Get Started</Button>
+                <Button className="bg-primary hover:bg-primary/90 text-white rounded-lg px-6 py-2.5 text-base font-bold shadow-md cursor-pointer transition-all hover:scale-105 active:scale-95">Get Started</Button>
               </Link>
             </>
           )}
@@ -195,6 +195,7 @@ const Navbar = () => {
           <Link to="/courses" className={cn("block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors", isActive("/courses") ? "text-indigo-600 bg-indigo-50" : "text-gray-600 hover:bg-gray-50")} onClick={() => setIsOpen(false)}>Courses</Link>
           <Link to="/webinars" className={cn("block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors", isActive("/webinars") ? "text-indigo-600 bg-indigo-50" : "text-gray-600 hover:bg-gray-50")} onClick={() => setIsOpen(false)}>Webinars</Link>
           <Link to="/consultancy" className={cn("block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors", isActive("/consultancy") ? "text-indigo-600 bg-indigo-50" : "text-gray-600 hover:bg-gray-50")} onClick={() => setIsOpen(false)}>Consultancy</Link>
+          <Link to="/books" className={cn("block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors", isActive("/books") ? "text-indigo-600 bg-indigo-50" : "text-gray-600 hover:bg-gray-50")} onClick={() => setIsOpen(false)}>Books</Link>
           <Link to="/franchise" className={cn("block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors", isActive("/franchise") ? "text-indigo-600 bg-indigo-50" : "text-gray-600 hover:bg-gray-50")} onClick={() => setIsOpen(false)}>Franchise</Link>
           <Link to="/updates" className={cn("block px-4 py-2.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2", isActive("/updates") ? "text-indigo-600 bg-indigo-50" : "text-gray-600 hover:bg-gray-50")} onClick={() => setIsOpen(false)}>
             Updates <div className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />

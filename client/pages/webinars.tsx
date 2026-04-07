@@ -71,10 +71,10 @@ export default function Webinars() {
     return (
         <div className="min-h-screen bg-background pb-20">
             {/* Header */}
-            <div className="bg-primary/5 py-12">
+            <div className="bg-[#0f172a] py-20 border-b border-white/5">
                 <div className="container px-4 mx-auto text-center">
-                    <h1 className="text-4xl font-bold mb-4">Live Webinars & Events</h1>
-                    <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+                    <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">Live Webinars & Events</h1>
+                    <p className="text-slate-300 text-lg max-w-2xl mx-auto">
                         Join interactive sessions with industry leaders, learn real-world skills, and network with peers.
                     </p>
                 </div>
@@ -102,7 +102,7 @@ export default function Webinars() {
                                     />
                                     <div className="absolute top-2 right-2">
                                         <Badge variant={webinar.isFree ? "secondary" : "default"}>
-                                            {webinar.isFree ? "Free" : `₹${Number(webinar.price)}`}
+                                            {webinar.isFree ? "Free" : "Paid"}
                                         </Badge>
                                     </div>
                                 </div>

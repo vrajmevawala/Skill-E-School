@@ -44,4 +44,29 @@ export class ConsultancyService {
             });
         });
     }
+    static async createExpert(data: { userId: string; specialization: string; hourlyRate: number }) {
+        const existing = await prisma.expert.findUnique({
+            where: { userId: data.userId }
+        });
+        if (existing) throw new AppError("This user is already an expert", 400);
+
+        return prisma.expert.create({
+            data,
+            include: { user: { include: { profile: true } } }
+        });
+    }
+
+    static async updateExpert(id: string, data: { specialization?: string; hourlyRate?: number }) {
+        return prisma.expert.update({
+            where: { id },
+            data,
+            include: { user: { include: { profile: true } } }
+        });
+    }
+
+    static async deleteExpert(id: string) {
+        return prisma.expert.delete({
+            where: { id }
+        });
+    }
 }

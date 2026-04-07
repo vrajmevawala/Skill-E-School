@@ -12,7 +12,6 @@ import {
 import { authService } from "@/services/auth.service";
 import { courseService } from "@/services/course.service";
 import { webinarService } from "@/services/webinar.service";
-import { franchiseService } from "@/services/franchise.service";
 import { cn } from "@/lib/utils";
 
 const StatsCard = ({ title, value, change, trend, icon: Icon }: any) => (
@@ -70,7 +69,6 @@ const Dashboard = () => {
         totalUsers: 0,
         totalCourses: 0,
         totalWebinars: 0,
-        activeFranchises: 0,
         recentUsers: [] as any[],
         roleDistribution: {
             STUDENT: 0,
@@ -83,14 +81,22 @@ const Dashboard = () => {
     useEffect(() => {
         const fetchStats = async () => {
             try {
-                const [usersRes, coursesRes, webinarsRes, franchiseRes] = await Promise.all([
-                    authService.getAllUsers(),
-                    courseService.getAll(),
-                    webinarService.getAll(),
-                    franchiseService.getPartners()
+                const [usersRes, coursesRes, webinarsRes] = await Promise.all([
+                    authService.getAllUsers().catch((err) => {
+                        console.error("Dashboard: Failed to fetch users", err);
+                        return { users: [] };
+                    }),
+                    courseService.getAll().catch((err) => {
+                        console.error("Dashboard: Failed to fetch courses", err);
+                        return { courses: [] };
+                    }),
+                    webinarService.getAll().catch((err) => {
+                        console.error("Dashboard: Failed to fetch webinars", err);
+                        return { webinars: [] };
+                    })
                 ]);
 
-                const users = (usersRes.users || []).filter((u: any) => u.emailVerified);
+                const users = usersRes.users || [];
                 const roles = users.reduce((acc: any, curr: any) => {
                     acc[curr.role] = (acc[curr.role] || 0) + 1;
                     return acc;
@@ -100,7 +106,6 @@ const Dashboard = () => {
                     totalUsers: users.length,
                     totalCourses: coursesRes.courses?.length || 0,
                     totalWebinars: webinarsRes.webinars?.length || 0,
-                    activeFranchises: franchiseRes.partners?.length || 0,
                     recentUsers: users.slice(0, 5),
                     roleDistribution: roles
                 });
@@ -142,7 +147,7 @@ const Dashboard = () => {
                 <StatsCard title="Total Students" value={stats.totalUsers} change="+12.5%" trend="up" icon={Users} />
                 <StatsCard title="Active Courses" value={stats.totalCourses} change="+4" trend="up" icon={BookOpen} />
                 <StatsCard title="Upcoming Webinars" value={stats.totalWebinars} change="-1" trend="down" icon={Video} />
-                <StatsCard title="Partners" value={stats.activeFranchises} change="+2" trend="up" icon={TrendingUp} />
+                <StatsCard title="Platform Growth" value={`${Math.round((stats.totalUsers / 100) * 100)}%`} change="+5%" trend="up" icon={TrendingUp} />
             </div>
 
             {/* Content Grid */}

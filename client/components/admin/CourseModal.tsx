@@ -19,7 +19,8 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
-import { Trash2, Plus, ExternalLink, FileText, Video } from "lucide-react";
+import { Trash2, Plus, ExternalLink, FileText, Video, BookOpen, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CourseModalProps {
   isOpen: boolean;
@@ -278,152 +279,154 @@ export const CourseModal = ({
           )}
 
           {activeTab === 'content' && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-200">
-              <div className="flex items-center justify-between">
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
                   <Video className="h-4 w-4 text-primary" />
-                  <h3 className="font-bold text-sm">Course Lessons</h3>
+                  <h3 className="text-sm font-bold text-slate-900">Course Curriculum</h3>
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={addLesson}>
-                  <Plus className="h-4 w-4 mr-2" /> Add Lesson
+                <Button type="button" variant="outline" size="sm" onClick={addLesson} className="rounded-xl h-9 border-slate-200 text-slate-600 font-bold text-[10px] uppercase tracking-widest">
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Phase/Lesson
                 </Button>
               </div>
 
-              {lessons.length === 0 && (
-                <div className="text-center py-8 border-2 border-dashed rounded-lg bg-gray-50">
-                  <p className="text-xs text-muted-foreground">No lessons added yet. Click "Add Lesson" to start building your course content.</p>
+              {lessons.length === 0 ? (
+                <div className="text-center py-16 border-2 border-dashed border-slate-100 rounded-[2rem] bg-slate-50/50">
+                  <Video className="h-10 w-10 text-slate-200 mx-auto mb-3" />
+                  <p className="text-xs font-bold text-slate-400">Your curriculum is empty. Start adding systematic modules.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {lessons.map((lesson, idx) => (
+                    <div key={lesson.id} className="p-6 rounded-[1.5rem] bg-slate-50 border border-slate-100 space-y-4 relative group">
+                      <div className="flex items-center gap-4">
+                        <div className="h-8 w-8 rounded-xl bg-white border border-slate-200 text-primary text-xs font-black flex items-center justify-center shrink-0 shadow-sm">
+                          {idx + 1}
+                        </div>
+                        <Input 
+                          placeholder="Module Title (e.g., Intro to Neuroscience of Growth)" 
+                          className="h-11 rounded-xl bg-white border-slate-200 shadow-sm font-bold text-sm"
+                          value={lesson.title}
+                          onChange={(e) => updateLesson(lesson.id, 'title', e.target.value)}
+                        />
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-9 w-9 text-red-400 hover:bg-red-50 hover:text-red-600 rounded-xl shrink-0"
+                          onClick={() => removeLesson(lesson.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="md:col-span-2 space-y-1">
+                          <Label className="text-[9px] font-black uppercase text-slate-400 tracking-widest pl-1">High-Res Video Link</Label>
+                          <Input 
+                            placeholder="https://..." 
+                            className="h-10 rounded-xl bg-white border-slate-200 text-xs font-mono"
+                            value={lesson.videoUrl || ""}
+                            onChange={(e) => updateLesson(lesson.id, 'videoUrl', e.target.value)}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-[9px] font-black uppercase text-slate-400 tracking-widest pl-1">Duration (Min)</Label>
+                          <Input 
+                            type="number" 
+                            placeholder="15" 
+                            className="h-10 rounded-xl bg-white border-slate-200 font-bold"
+                            value={lesson.duration || ""}
+                            onChange={(e) => updateLesson(lesson.id, 'duration', parseInt(e.target.value))}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
-
-              <div className="space-y-4">
-                {lessons.map((lesson, idx) => (
-                  <div key={lesson.id} className="p-4 border rounded-xl bg-white space-y-3 relative group shadow-sm">
-                    <div className="flex items-center gap-3">
-                      <div className="h-6 w-6 rounded-full bg-primary/10 text-primary text-[10px] font-bold flex items-center justify-center">
-                        {idx + 1}
-                      </div>
-                      <Input 
-                        placeholder="Lesson Title (e.g. Introduction to React)" 
-                        className="h-8 text-sm font-medium"
-                        value={lesson.title}
-                        onChange={(e) => updateLesson(lesson.id, 'title', e.target.value)}
-                      />
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-red-500 hover:bg-red-50"
-                        onClick={() => removeLesson(lesson.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <div className="grid grid-cols-3 gap-3">
-                      <div className="col-span-2 space-y-1">
-                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Video URL (YouTube/Vimeo/Direct)</Label>
-                        <Input 
-                          placeholder="https://..." 
-                          className="h-8 text-xs font-mono"
-                          value={lesson.videoUrl || ""}
-                          onChange={(e) => updateLesson(lesson.id, 'videoUrl', e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Duration (min)</Label>
-                        <Input 
-                          type="number" 
-                          placeholder="10" 
-                          className="h-8 text-xs"
-                          value={lesson.duration || ""}
-                          onChange={(e) => updateLesson(lesson.id, 'duration', parseInt(e.target.value))}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           )}
 
           {activeTab === 'resources' && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-left-4 duration-200">
-              <div className="flex items-center justify-between">
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
                   <FileText className="h-4 w-4 text-primary" />
-                  <h3 className="font-bold text-sm">Downloadable Resources</h3>
+                  <h3 className="text-sm font-bold text-slate-900">Frameworks & Assets</h3>
                 </div>
-                <Button type="button" variant="outline" size="sm" onClick={addResource}>
-                  <Plus className="h-4 w-4 mr-2" /> Add Resource
+                <Button type="button" variant="outline" size="sm" onClick={addResource} className="rounded-xl h-9 border-slate-200 text-slate-600 font-bold text-[10px] uppercase tracking-widest">
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Document
                 </Button>
               </div>
 
-              {resources.length === 0 && (
-                <div className="text-center py-8 border-2 border-dashed rounded-lg bg-gray-50">
-                  <p className="text-xs text-muted-foreground">No resources added. Add PDFs, slide decks, or source code for your students.</p>
+              {resources.length === 0 ? (
+                <div className="text-center py-16 border-2 border-dashed border-slate-100 rounded-[2rem] bg-slate-50/50">
+                  <FileText className="h-10 w-10 text-slate-200 mx-auto mb-3" />
+                  <p className="text-xs font-bold text-slate-400">No supplemental frameworks added yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {resources.map((resource) => (
+                    <div key={resource.id} className="grid grid-cols-1 md:grid-cols-12 gap-3 p-4 rounded-2xl bg-slate-50 border border-slate-100 items-center">
+                      <div className="md:col-span-4">
+                        <Input 
+                          placeholder="Asset Name (e.g. Workbook)" 
+                          className="h-10 rounded-xl bg-white border-slate-200 text-xs font-bold"
+                          value={resource.name}
+                          onChange={(e) => updateResource(resource.id, 'name', e.target.value)}
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <Select
+                          value={resource.type}
+                          onValueChange={(v) => updateResource(resource.id, 'type', v)}
+                        >
+                          <SelectTrigger className="h-10 rounded-xl bg-white border-slate-200 text-[10px] font-bold">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="rounded-xl">
+                            <SelectItem value="pdf">PDF</SelectItem>
+                            <SelectItem value="zip">ZIP</SelectItem>
+                            <SelectItem value="link">Link</SelectItem>
+                            <SelectItem value="doc">Doc</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="md:col-span-5">
+                        <Input 
+                          placeholder="https://..." 
+                          className="h-10 rounded-xl bg-white border-slate-200 text-xs font-mono"
+                          value={resource.url || ""}
+                          onChange={(e) => updateResource(resource.id, 'url', e.target.value)}
+                        />
+                      </div>
+                      <div className="md:col-span-1 flex justify-end">
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-9 w-9 text-red-400 hover:bg-red-50 hover:text-red-600 rounded-xl"
+                          onClick={() => removeResource(resource.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
-
-              <div className="space-y-3">
-                {resources.map((resource) => (
-                  <div key={resource.id} className="grid grid-cols-12 gap-3 p-3 border rounded-lg bg-white items-center">
-                    <div className="col-span-4">
-                      <Input 
-                        placeholder="Resource Name" 
-                        className="h-8 text-xs"
-                        value={resource.name}
-                        onChange={(e) => updateResource(resource.id, 'name', e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-2">
-                      <Select
-                        value={resource.type}
-                        onValueChange={(v) => updateResource(resource.id, 'type', v)}
-                      >
-                        <SelectTrigger className="h-8 text-[10px]">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="pdf">PDF</SelectItem>
-                          <SelectItem value="zip">ZIP</SelectItem>
-                          <SelectItem value="link">Link</SelectItem>
-                          <SelectItem value="doc">Doc</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="col-span-5">
-                      <Input 
-                        placeholder="File URL" 
-                        className="h-8 text-xs font-mono"
-                        value={resource.url || ""}
-                        onChange={(e) => updateResource(resource.id, 'url', e.target.value)}
-                      />
-                    </div>
-                    <div className="col-span-1">
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="icon" 
-                        className="h-8 w-8 text-red-500 hover:bg-red-50"
-                        onClick={() => removeResource(resource.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           )}
-
-          <DialogFooter className="sticky bottom-0 bg-white pt-4 pb-2">
-            <Button type="button" variant="ghost" onClick={onClose} disabled={loading}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : course ? "Update Course" : "Create Course"}
-            </Button>
-          </DialogFooter>
         </form>
+
+        <DialogFooter className="p-8 pt-4 border-t border-slate-50 bg-slate-50/50">
+          <Button type="button" variant="ghost" onClick={onClose} disabled={loading} className="rounded-xl h-11 px-8 font-bold text-slate-500">
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading} onClick={handleSubmit} className="bg-primary hover:bg-primary/90 text-white rounded-xl h-11 px-10 font-bold shadow-lg shadow-primary/10 transition-all hover:scale-[1.02] active:scale-95">
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : course ? "Save Program Updates" : "Confirm Publication"}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

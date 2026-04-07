@@ -64,10 +64,10 @@ export default function Consultancy() {
 
     return (
         <div className="min-h-screen bg-background pb-20">
-            <section className="py-16 bg-primary/5 text-center">
-                <div className="container px-4 mx-auto">
-                    <h1 className="text-4xl font-bold mb-4">Expert Consultancy Hub</h1>
-                    <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+            <section className="bg-[#0f172a] py-20 border-b border-white/5">
+                <div className="container px-4 mx-auto text-center">
+                    <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">Expert Consultancy Hub</h1>
+                    <p className="text-slate-300 text-lg max-w-2xl mx-auto">
                         Get personalized 1-on-1 guidance from top industry professionals.
                     </p>
                 </div>

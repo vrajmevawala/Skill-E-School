@@ -142,4 +142,31 @@ export class CoursesController {
             next(error);
         }
     }
+
+    static async createCategory(req: Request, res: Response, next: NextFunction) {
+        try {
+            const category = await CoursesService.createCategory(req.body);
+            return APIResponse.success(res, { category }, 201);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async updateCategory(req: Request, res: Response, next: NextFunction) {
+        try {
+            const category = await CoursesService.updateCategory(req.params.id, req.body);
+            return APIResponse.success(res, { category });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async deleteCategory(req: Request, res: Response, next: NextFunction) {
+        try {
+            await CoursesService.deleteCategory(req.params.id);
+            return APIResponse.success(res, { message: "Category deleted successfully" });
+        } catch (error) {
+            next(error);
+        }
+    }
 }

@@ -52,6 +52,19 @@ export default function Index() {
     fetchData();
   }, []);
 
+  const partners = [
+    { name: "LIC", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4xlS2xfNvx6AwD8gHu0lpvU9Ssp3jAeV3Hg&s" },
+    { name: "Tata Capital", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRY97gYHZS5snyYNhBx7WHUPjkE6rEg7fjqkg&s" },
+    { name: "Bank of Baroda", logo: "https://upload.wikimedia.org/wikipedia/en/f/f2/BankOfBarodaLogo.svg" },
+    { name: "Central Bank", logo: "https://wp.logos-download.com/wp-content/uploads/2022/11/Central_Bank_of_India_Logo.png?dl" },
+    { name: "HDFC Life", logo: "https://hdfc-international.digiqt.com/_next/static/media/logo.8c036a54.png" },
+    { name: "Bajaj FinServ", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnYzFyD1m5gWpzZpvTFhKfKQJqRTCygVPoUQ&s" },
+    { name: "HPCL", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT0KlpkftVZnoIt82QHzxBAFwaV1EG85baIDw&s" },
+    { name: "Indian Oil", logo: "https://companieslogo.com/img/orig/IOC.NS-081204c8.png?t=1727429249" },
+    { name: "JCI India", logo: "https://control.jciindia.in/lib/assets/website/images/JCI_India_logo.webp" },
+    { name: "Vestige", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQo9ttoIFa6rzg8B7xeOzuXd10sXwRJ7ICalw&s" },
+  ];
+
   return (
     <div className="flex flex-col w-full">
       {/* Hero Section */}
@@ -70,17 +83,17 @@ export default function Index() {
         <div className="container relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8 text-center lg:text-left">
-              <Badge variant="secondary" className="px-3 py-1 text-sm font-medium">
+              <Badge variant="secondary" className="px-3 py-1 text-sm font-medium bg-[#0f172a] hover:bg-primary text-white">
                 The Future of Blended Learning
               </Badge>
               <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
-                Empower Your Future with <span className="text-primary">Skill E-School</span>
+                Empower Your Future with <span className="text-primary ">Skill E-School</span>
               </h1>
               <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto lg:mx-0">
                 A comprehensive platform for modern learners and aspiring entrepreneurs. Master new skills, attend live webinars, and manage your own education franchise.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
-                <Button size="lg" className="text-lg px-8 py-6 h-auto" asChild>
+                <Button size="lg" className="text-lg px-8 py-6 h-auto hover:bg-[#0f172a] hover:text-white" asChild>
                   <Link to={isAuthenticated ? "/courses" : "/login?course=true"}>
                     Start Learning Now
                     <ArrowRight className="ml-2 h-5 w-5 inline-block" />
@@ -140,7 +153,7 @@ export default function Index() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 bg-white border-y">
+      <section className="py-12 bg-[#0f172a] border-y">
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
             <div className="text-center space-y-2">
@@ -229,6 +242,7 @@ export default function Index() {
           </div>
         </div>
       </section>
+
 
       {/* Featured Courses */}
       <section className="py-20 bg-white">
@@ -394,19 +408,30 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Trust Section */}
-      <section className="py-20 bg-white">
-        <div className="container">
-          <div className="text-center space-y-4 mb-12">
-            <p className="text-sm font-semibold text-primary uppercase tracking-widest">Our Partnerships</p>
-            <h2 className="text-2xl font-bold text-slate-400">Trusted by leading educational institutions worldwide</h2>
+      {/* Trust Section - Sliding Partners Overlay */}
+      <section className="py-16 bg-white border-t overflow-hidden">
+        <div className="container mb-12">
+          <div className="text-center space-y-4">
+            <p className="text-lg font-semibold text-primary uppercase tracking-widest">Global Partnerships</p>
+            <p className="text-slate-500 max-w-2xl mx-auto italic font-serif">Trusted by world-class financial institutions, energy leaders, and major consumer brands.</p>
           </div>
-          <div className="flex flex-wrap justify-center items-center gap-12 opacity-40 grayscale">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Google_2015_logo.svg/2560px-Google_2015_logo.svg.png" alt="Google" className="h-8" />
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/Facebook_Logo_%282019%29.png/1024px-Facebook_Logo_%282019%29.png" alt="Meta" className="h-8" />
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Amazon_logo.svg/2560px-Amazon_logo.svg.png" alt="Amazon" className="h-6" />
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Netflix_2015_logo.svg/2560px-Netflix_2015_logo.svg.png" alt="Netflix" className="h-8" />
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Apple_logo_grey.svg/1724px-Apple_logo_grey.svg.png" alt="Apple" className="h-8" />
+        </div>
+        
+        <div className="relative flex overflow-hidden group">
+          {/* Continuous scrolling container */}
+          <div className="animate-marquee flex gap-12 items-center whitespace-nowrap min-w-full">
+            {[...partners, ...partners].map((partner, index) => (
+              <div key={index} className="flex flex-col items-center justify-center min-w-[160px] px-4">
+                <div className="h-20 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110">
+                  <img 
+                    src={partner.logo} 
+                    alt={partner.name} 
+                    className="max-h-full max-w-full object-contain filter-none drop-shadow-md" 
+                  />
+                </div>
+                <p className="mt-4 text-[11px] font-bold text-slate-500 tracking-wider font-serif uppercase text-center">{partner.name}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

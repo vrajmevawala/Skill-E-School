@@ -1,9 +1,0 @@
-@echo off
-SET "DATABASE_URL=postgresql://neondb_owner:npg_G4bKTry2SmJC@ep-red-forest-aiu1928w-pooler.c-4.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
-echo Generating Prisma Client...
-npx prisma generate
-echo Pushing schema to database...
-npx prisma db push --accept-data-loss
-echo Seeding database...
-npm run seed
-echo Done!

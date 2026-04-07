@@ -6,6 +6,7 @@ import coursesRoutes from "./modules/courses/courses.routes";
 import webinarRoutes from "./modules/webinars/webinars.routes";
 import franchiseRoutes from "./modules/franchise/franchise.routes";
 import consultancyRoutes from "./modules/consultancy/consultancy.routes";
+import booksRoutes from "./modules/books/books.routes";
 
 const app: Application = express();
 
@@ -36,6 +37,7 @@ app.use("/api/courses", coursesRoutes);
 app.use("/api/webinars", webinarRoutes);
 app.use("/api/franchise", franchiseRoutes);
 app.use("/api/consultancy", consultancyRoutes);
+app.use("/api/books", booksRoutes);
 
 // Error Handling
 app.use(errorHandler);
