@@ -22,4 +22,31 @@ export class ConsultancyController {
             next(error);
         }
     }
+
+    static async createExpert(req: Request, res: Response, next: NextFunction) {
+        try {
+            const expert = await ConsultancyService.createExpert(req.body);
+            return APIResponse.success(res, { expert }, 201);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async updateExpert(req: Request, res: Response, next: NextFunction) {
+        try {
+            const expert = await ConsultancyService.updateExpert(req.params.id, req.body);
+            return APIResponse.success(res, { expert });
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    static async deleteExpert(req: Request, res: Response, next: NextFunction) {
+        try {
+            await ConsultancyService.deleteExpert(req.params.id);
+            return APIResponse.success(res, { message: "Expert removed successfully" });
+        } catch (error) {
+            next(error);
+        }
+    }
 }

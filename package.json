@@ -9,7 +9,9 @@
     "format.fix": "prettier --write .",
     "typecheck": "tsc",
     "server": "tsx server/src/index.ts",
-    "seed": "prisma db seed"
+    "seed": "prisma db seed",
+    "start": "tsx server/src/index.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@prisma/client": "5",

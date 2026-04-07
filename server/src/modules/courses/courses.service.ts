@@ -174,7 +174,45 @@ export class CoursesService {
     }
 
     static async getCategories() {
-        return prisma.courseCategory.findMany();
+        return prisma.courseCategory.findMany({
+            include: {
+                _count: {
+                    select: { courses: true }
+                }
+            }
+        });
+    }
+
+    static async createCategory(data: any) {
+        return prisma.courseCategory.create({
+            data: {
+                name: data.name
+            }
+        });
+    }
+
+    static async updateCategory(id: string, data: any) {
+        return prisma.courseCategory.update({
+            where: { id },
+            data: {
+                name: data.name
+            }
+        });
+    }
+
+    static async deleteCategory(id: string) {
+        // Check if category has courses before deleting
+        const count = await prisma.course.count({
+            where: { categoryId: id }
+        });
+
+        if (count > 0) {
+            throw new AppError("Cannot delete category with existing courses", 400);
+        }
+
+        return prisma.courseCategory.delete({
+            where: { id }
+        });
     }
 
     /**

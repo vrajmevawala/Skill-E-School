@@ -22,6 +22,9 @@ import AdminWebinars from "./pages/admin/Webinars";
 import AdminFranchise from "./pages/admin/Franchise";
 import AdminConsultancy from "./pages/admin/Consultancy";
 import AdminSettings from "./pages/admin/Settings";
+import Books from "./pages/Books";
+import BookReader from "./pages/BookReader";
+import AdminBooks from "./pages/admin/Books";
 import StudentProfile from "./pages/student/Profile";
 import { useAuthStore } from "./store/auth";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -55,6 +58,8 @@ function App() {
         <Route element={<Layout><PrivacyPolicy /></Layout>} path="/privacy" />
         <Route element={<Layout><TermsOfService /></Layout>} path="/terms" />
         <Route element={<Layout><ContactUs /></Layout>} path="/contact" />
+        <Route element={<Layout><Books /></Layout>} path="/books" />
+        <Route path="/books/:id" element={<BookReader />} />
         {/* Admin Routes */}
         <Route element={<ProtectedRoute allowedRoles={["ADMIN"]} />}>
           <Route element={<AdminLayout />}>
@@ -64,6 +69,7 @@ function App() {
             <Route path="/admin/webinars" element={<AdminWebinars />} />
             <Route path="/admin/consultancy" element={<AdminConsultancy />} />
             <Route path="/admin/franchise" element={<AdminFranchise />} />
+            <Route path="/admin/books" element={<AdminBooks />} />
             <Route path="/admin/settings" element={<AdminSettings />} />
           </Route>
         </Route>

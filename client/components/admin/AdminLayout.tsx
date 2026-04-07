@@ -11,11 +11,21 @@ import {
     Menu,
     X,
     GraduationCap,
-    Headphones
+    Headphones,
+    Book as BookIcon,
+    ChevronLeft,
+    Loader2,
+    AlertCircle,
+    ShieldAlert,
+    Lock,
+    Info
 } from "lucide-react";
 import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/store/auth";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 const navItems = [
     { icon: LayoutDashboard, label: "Dashboard", href: "/admin" },
@@ -23,7 +33,7 @@ const navItems = [
     { icon: BookOpen, label: "Courses", href: "/admin/courses" },
     { icon: Video, label: "Webinars", href: "/admin/webinars" },
     { icon: Headphones, label: "Consultancy", href: "/admin/consultancy" },
-    { icon: Building2, label: "Franchise", href: "/admin/franchise" },
+    { icon: BookIcon, label: "Books", href: "/admin/books" },
     { icon: Settings, label: "Settings", href: "/admin/settings" },
 ];
 
@@ -36,10 +46,9 @@ const AdminLayout = () => {
         <div className="min-h-screen bg-gray-50 flex">
             {/* Sidebar - Desktop */}
             <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-gray-200 sticky top-0 h-screen">
-                <div className="h-16 border-b border-gray-200 flex items-center px-6 gap-2">
+                <div className="h-20 border-b border-gray-200 flex items-center px-6 gap-2">
                     <Link to="/" className="flex items-center gap-2">
-                        <GraduationCap className="h-6 w-6 text-indigo-600" />
-                        <span className="text-lg font-bold tracking-tight text-gray-900">Admin<span className="text-indigo-600">Panel</span></span>
+                        <img src="/logo-nav.png" alt="Skill E-School" className="h-12 w-auto object-contain" />
                     </Link>
                 </div>
 
@@ -53,11 +62,11 @@ const AdminLayout = () => {
                                 className={cn(
                                     "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
                                     isActive
-                                        ? "bg-indigo-50 text-indigo-600"
-                                        : "text-gray-600 hover:bg-indigo-50 hover:text-indigo-600"
+                                        ? "bg-primary/5 text-primary"
+                                        : "text-gray-600 hover:bg-primary/5 hover:text-primary"
                                 )}
                             >
-                                <item.icon className={cn("h-5 w-5", isActive ? "text-indigo-600" : "text-gray-400")} />
+                                <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-gray-400")} />
                                 {item.label}
                             </Link>
                         );
@@ -78,7 +87,7 @@ const AdminLayout = () => {
             {/* Mobile Header */}
             <div className="lg:hidden fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-50 px-4 h-16 flex items-center justify-between shadow-sm">
                 <Link to="/" className="flex items-center gap-2">
-                    <GraduationCap className="h-6 w-6 text-indigo-600" />
+                    <img src="/logo.png" alt="Skill E-School" className="h-10 w-auto object-contain" />
                     <span className="text-lg font-bold text-gray-900">Admin</span>
                 </Link>
                 <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
@@ -96,8 +105,11 @@ const AdminLayout = () => {
                 "lg:hidden fixed top-0 bottom-0 left-0 w-64 bg-white z-50 transition-transform duration-300 ease-in-out shadow-xl",
                 isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
             )}>
-                <div className="h-16 border-b border-gray-200 px-6 flex items-center justify-between">
-                    <span className="text-lg font-bold tracking-tight text-gray-900">Admin<span className="text-indigo-600">Panel</span></span>
+                <div className="h-20 border-b border-gray-200 px-6 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <img src="/logo.png" alt="Skill E-School" className="h-10 w-auto object-contain" />
+                        <span className="text-lg font-bold tracking-tight text-gray-900">Admin<span className="text-primary">Panel</span></span>
+                    </div>
                     <button className="p-1 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer" onClick={() => setIsMobileMenuOpen(false)}>
                         <X className="h-5 w-5 text-gray-600" />
                     </button>
@@ -113,11 +125,11 @@ const AdminLayout = () => {
                                 className={cn(
                                     "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
                                     isActive
-                                        ? "bg-indigo-50 text-indigo-600"
-                                        : "text-gray-600 hover:bg-indigo-50 hover:text-indigo-600"
+                                        ? "bg-primary/5 text-primary"
+                                        : "text-gray-600 hover:bg-primary/5 hover:text-primary"
                                 )}
                             >
-                                <item.icon className={cn("h-5 w-5", isActive ? "text-indigo-600" : "text-gray-400")} />
+                                <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-gray-400")} />
                                 {item.label}
                             </Link>
                         );

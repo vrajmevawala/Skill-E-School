@@ -7,6 +7,9 @@ const router = Router();
 // Non-parameterized routes first to prevent conflicts
 router.get("/", CoursesController.getAll);
 router.get("/categories", CoursesController.getCategories);
+router.post("/categories", protect, restrictTo("ADMIN"), CoursesController.createCategory);
+router.patch("/categories/:id", protect, restrictTo("ADMIN"), CoursesController.updateCategory);
+router.delete("/categories/:id", protect, restrictTo("ADMIN"), CoursesController.deleteCategory);
 router.get("/my-courses", protect, CoursesController.getMyCourses);
 
 // Parameterized routes after

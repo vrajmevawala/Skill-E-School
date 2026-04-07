@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // --- Payments ---
@@ -33,6 +33,9 @@ model User {
   // Trainer relations
   coursesCreated   Course[] @relation("TrainerCourses")
   expertProfile    Expert?
+
+  // Books
+  bookAccess       BookAccess[]
 }
 
 model Otp {
@@ -271,4 +274,32 @@ model Payout {
   status    String        @default("PENDING")
   paidAt    DateTime?
   createdAt DateTime      @default(now())
+}
+// --- Our Books Section ---
+
+model Book {
+  id            String    @id @default(cuid())
+  title         String
+  description   String
+  author        String    @default("Parijat Dave")
+  thumbnail     String?   // URL for book cover
+  pdfUrl        String    // URL for the PDF file
+  price         Float     @default(0)
+  isFree        Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  access        BookAccess[]
+}
+
+model BookAccess {
+  id        String   @id @default(cuid())
+  bookId    String
+  book      Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status    String   @default("ACTIVE") // ACTIVE, REVOKED
+  createdAt DateTime @default(now())
+
+  @@unique([userId, bookId])
 }

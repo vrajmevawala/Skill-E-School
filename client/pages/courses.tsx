@@ -128,19 +128,19 @@ export default function Courses() {
     return (
         <div className="min-h-screen bg-background pb-20">
             {/* Hero Section */}
-            <div className="bg-primary/5 py-12">
+            <div className="bg-[#0f172a] py-16 border-b border-white/5">
                 <div className="container px-4 mx-auto text-center">
-                    <h1 className="text-4xl font-bold mb-4 tracking-tight text-gray-900">Explore Our Courses</h1>
-                    <p className="text-muted-foreground text-lg max-w-2xl mx-auto mb-8">
+                    <h1 className="text-4xl md:text-5xl font-bold mb-4 tracking-tight text-white">Explore Our Courses</h1>
+                    <p className="text-slate-300 text-lg max-w-2xl mx-auto mb-10">
                         Upgrade your skills with our premium courses designed by industry experts.
                     </p>
 
                     <div className="flex justify-center">
                         <div className="relative w-full max-w-xl">
-                            <Search className="absolute left-4 top-3.5 h-5 w-5 text-gray-400" />
+                            <Search className="absolute left-4 top-3.5 h-5 w-5 text-slate-400" />
                             <input
                                 placeholder="Search courses..."
-                                className="w-full bg-white rounded-xl pl-12 pr-4 py-3 text-gray-900 shadow-sm border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary placeholder:text-gray-400 transition-all"
+                                className="w-full bg-white/10 backdrop-blur-md rounded-xl pl-12 pr-4 py-3 text-white shadow-sm border border-white/20 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary placeholder:text-slate-400 transition-all"
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />

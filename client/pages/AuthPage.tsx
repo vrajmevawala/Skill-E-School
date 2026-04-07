@@ -187,12 +187,9 @@ export default function AuthPage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
                 </div>
 
-                <div className="relative z-20 flex items-center text-2xl font-bold tracking-tight">
-                    <div className="bg-indigo-600 p-2 rounded-xl mr-3 shadow-lg shadow-indigo-600/20">
-                        <GraduationCap className="h-8 w-8 text-white" />
-                    </div>
+                <div className="relative z-20 flex items-center">
                     <Link to="/" className="hover:opacity-80 transition-opacity">
-                        Skill E-School
+                        <img src="/logo.png" alt="Skill E-School" className="h-24 w-auto object-contain" />
                     </Link>
                 </div>
 
@@ -202,15 +199,6 @@ export default function AuthPage() {
                             <p className="text-3xl font-medium leading-tight">
                                 "The best investment you can make is in yourself. Unlock your potential with our expert-led courses."
                             </p>
-                            <footer className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-full bg-indigo-600/20 flex items-center justify-center border border-indigo-500/30">
-                                    <ShieldCheck className="h-6 w-6 text-indigo-400" />
-                                </div>
-                                <div>
-                                    <div className="font-semibold text-lg">Blended Learning Platform</div>
-                                    <div className="text-white/60 text-sm">Join 10,000+ students worldwide</div>
-                                </div>
-                            </footer>
                         </blockquote>
                     </div>
                 </div>
@@ -219,10 +207,10 @@ export default function AuthPage() {
             {/* Right Side - Forms */}
             <div className="flex-1 flex flex-col justify-center items-center p-6 md:p-12 bg-gray-50 overflow-y-auto">
                 <div className="w-full max-w-[480px] space-y-8 py-8 px-2">
-                    <div className="flex justify-center mb-2 lg:hidden">
-                        <div className="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-600/20 group">
-                            <GraduationCap className="h-8 w-8 text-white group-hover:scale-110 transition-transform" />
-                        </div>
+                    <div className="flex justify-center mb-6 lg:hidden">
+                        <Link to="/" className="hover:opacity-80 transition-opacity">
+                            <img src="/logo.png" alt="Skill E-School" className="h-24 w-auto object-contain" />
+                        </Link>
                     </div>
 
                     <div className="text-center space-y-2">

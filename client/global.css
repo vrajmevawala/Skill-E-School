@@ -1,5 +1,4 @@
-/** @import must precede all other statements */
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+/** System Roman font is used, no external import needed */
 
 @tailwind base;
 @tailwind components;
@@ -7,21 +6,20 @@
 
 @layer base {
   /**
-   * Tailwind CSS theme — Indigo brand
-   * tailwind.config.ts expects the following color variables to be expressed as HSL values.
+   * Tailwind CSS theme — Premium Navy & Gold brand
    */
   :root {
     --background: 210 20% 98%;
-    --foreground: 224 71.4% 4.1%;
+    --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
-    --card-foreground: 224 71.4% 4.1%;
+    --card-foreground: 222 47% 11%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 224 71.4% 4.1%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 43 74% 49%;
+    --primary-foreground: 222 47% 11%;
 
     --secondary: 220 14% 96%;
     --secondary-foreground: 220 9% 46%;
@@ -30,64 +28,64 @@
     --muted-foreground: 220 9% 46%;
 
     --accent: 220 14% 96%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent-foreground: 222 47% 11%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 239 84% 67%;
+    --ring: 43 74% 49%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 239 84% 67%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 43 74% 49%;
+    --sidebar-primary-foreground: 222 47% 11%;
     --sidebar-accent: 240 4.8% 95.9%;
     --sidebar-accent-foreground: 240 5.9% 10%;
     --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 239 84% 67%;
+    --sidebar-ring: 43 74% 49%;
   }
 
   .dark {
-    --background: 224 71.4% 4.1%;
+    --background: 215 45% 10%;
     --foreground: 210 20% 98%;
 
-    --card: 224 71.4% 4.1%;
+    --card: 215 45% 12%;
     --card-foreground: 210 20% 98%;
 
-    --popover: 224 71.4% 4.1%;
+    --popover: 215 45% 12%;
     --popover-foreground: 210 20% 98%;
 
-    --primary: 239 84% 67%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 43 74% 49%;
+    --primary-foreground: 215 45% 10%;
 
-    --secondary: 217.2 32.6% 17.5%;
+    --secondary: 217 32% 17%;
     --secondary-foreground: 210 20% 98%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: 217 32% 17%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 217.2 32.6% 17.5%;
+    --accent: 217 32% 17%;
     --accent-foreground: 210 20% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 20% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 239 84% 67%;
+    --border: 217 32% 17%;
+    --input: 217 32% 17%;
+    --ring: 43 74% 49%;
 
-    --sidebar-background: 240 5.9% 10%;
+    --sidebar-background: 215 45% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 239 84% 67%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 43 74% 49%;
+    --sidebar-primary-foreground: 215 45% 10%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 239 84% 67%;
+    --sidebar-ring: 43 74% 49%;
   }
 }
 
@@ -118,7 +116,7 @@
 
   /* Focus ring utility */
   :focus-visible {
-    @apply outline-none ring-2 ring-indigo-500 ring-offset-2;
+    @apply outline-none ring-2 ring-primary ring-offset-2;
   }
 }
 
@@ -126,7 +124,7 @@
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: #c7d2fe transparent;
+    scrollbar-color: #eab308 transparent;
   }
 
   .scrollbar-thin::-webkit-scrollbar {
@@ -139,11 +137,26 @@
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: #c7d2fe;
+    background-color: #eab308;
     border-radius: 9999px;
   }
 
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: #a5b4fc;
+    background-color: #ca8a04;
+  }
+
+  @keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  .animate-marquee {
+    display: flex;
+    width: max-content;
+    animation: marquee 40s linear infinite;
+  }
+
+  .animate-marquee:hover {
+    animation-play-state: paused;
   }
 }
