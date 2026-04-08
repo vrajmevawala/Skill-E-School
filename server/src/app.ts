@@ -98,7 +98,24 @@ app.use(errorHandler);
 
 // Serve index.html for all other routes (SPA support)
 app.get("*", (req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
+    if (found) {
+        res.sendFile(path.join(distPath, "index.html"), (err) => {
+            if (err) {
+                console.error("❌ [ERROR] Failed to send index.html:", err);
+                res.status(500).json({
+                    status: "error",
+                    message: "Failed to load the application. Please try clearing your browser cache.",
+                    details: process.env.NODE_ENV === "development" ? err.message : undefined
+                });
+            }
+        });
+    } else {
+        res.status(200).json({
+            status: "success",
+            message: "Skill E-School API is running",
+            timestamp: new Date().toISOString()
+        });
+    }
 });
 
 export default app;
