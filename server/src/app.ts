@@ -50,43 +50,37 @@ app.use(cors({
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Detailed diagnostics for dist folder
-console.log("🔍 [DIAGNOSTIC] Checking for SPA files...");
-console.log(`🏠 [DIAGNOSTIC] Current working directory: ${process.cwd()}`);
-console.log(`📂 [DIAGNOSTIC] __dirname: ${__dirname}`);
-try {
-    console.log(`Contents of ${process.cwd()}: [${fs.readdirSync(process.cwd()).join(", ")}]`);
-} catch (e) {
-    console.error("Failed to list directory contents");
-}
-
+// Path resolution for dist
 const pathsToTry = [
     path.join(process.cwd(), "dist"),
     path.resolve(__dirname, "../../dist"),
     path.resolve(__dirname, "../dist"),
-    path.join(process.cwd(), "client/dist"),
 ];
 
 let distPath = pathsToTry[0];
 let found = false;
 
 for (const p of pathsToTry) {
-    const indexPath = path.join(p, "index.html");
-    const exists = fs.existsSync(indexPath);
-    console.log(`   - Checking: ${p} -> ${exists ? "✅ Found index.html" : "❌ Not found"}`);
-    if (exists && !found) {
+    if (fs.existsSync(path.join(p, "index.html"))) {
         distPath = p;
         found = true;
+        break;
     }
 }
 
-if (!found) {
-    console.error("❌ [ERROR] NO index.html FOUND IN ANY SEARCH PATH!");
-} else {
+// 1. Serve static files FIRST and AGGRESSIVELY
+if (found) {
     console.log(`🚀 [SUCCESS] Static files will be served from: ${distPath}`);
+    // Serve the root dist folder
+    app.use(express.static(distPath, {
+        index: false, // Don't serve index.html automatically, we handle it below
+        etag: true,
+        lastModified: true
+    }));
+} else {
+    console.error("❌ [ERROR] NO index.html FOUND IN ANY SEARCH PATH!");
 }
 
-app.use(express.static(distPath));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -119,29 +113,35 @@ app.use(errorHandler);
 
 // Serve index.html for all other routes (SPA support)
 app.get("*", (req, res) => {
-    // If it looks like a request for a static file (contains a dot), don't serve index.html with a 200
-    // This helps debug missing assets
-    const isFileRequest = req.url.includes(".");
+    // CRITICAL: If this is a request for a JS/CSS/image file that reached here, 
+    // it means it was NOT found by express.static. DO NOT serve index.html.
+    const isAssetRequest = req.url.includes("/assets/") || 
+                          req.url.endsWith(".js") || 
+                          req.url.endsWith(".css") ||
+                          req.url.endsWith(".png") ||
+                          req.url.endsWith(".jpg") ||
+                          req.url.endsWith(".svg");
     
+    if (isAssetRequest) {
+        console.log(`❌ [404] Asset not found: ${req.url}`);
+        return res.status(404).json({
+            status: "error",
+            message: `Resource not found: ${req.url}`
+        });
+    }
+
     if (found) {
         const absolutePath = path.resolve(distPath, "index.html");
         res.sendFile(absolutePath, (err) => {
             if (err) {
-                console.error(`❌ [ERROR] Failed to send index.html from path: ${absolutePath}`);
-                console.error(`   Error details: ${err.message}`);
-                res.status(500).json({
-                    status: "error",
-                    message: "Failed to load the application from the server.",
-                    path: process.env.NODE_ENV === "development" ? absolutePath : undefined
-                });
+                console.error(`❌ [ERROR] Failed to send index.html: ${err.message}`);
+                res.status(500).send("Internal Server Error (SPA Fallback failed)");
             }
         });
     } else {
-        res.status(isFileRequest ? 404 : 200).json({
-            status: isFileRequest ? "error" : "success",
-            message: isFileRequest 
-                ? `Resource not found: ${req.url}` 
-                : "Skill E-School API is running. If you are seeing this on your frontend URL, it means the 'dist' folder is missing. Please check your Render Build Command.",
+        res.status(200).json({
+            status: "success",
+            message: "Skill E-School API is running, but UI assets are missing.",
             timestamp: new Date().toISOString()
         });
     }
