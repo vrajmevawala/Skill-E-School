@@ -3,6 +3,8 @@ import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
 import fs from "fs";
+import helmet from "helmet";
+import compression from "compression";
 import { errorHandler } from "./middlewares/error-handler";
 import authRoutes from "./modules/auth/auth.routes";
 import coursesRoutes from "./modules/courses/courses.routes";
@@ -12,6 +14,12 @@ import consultancyRoutes from "./modules/consultancy/consultancy.routes";
 import booksRoutes from "./modules/books/books.routes";
 
 const app: Application = express();
+
+// Security and Performance Middlewares
+app.use(helmet({
+    contentSecurityPolicy: false, // Disable CSP for now to ensure external assets load correctly
+}));
+app.use(compression());
 
 // Diagnostic: Check for DATABASE_URL
 if (process.env.DATABASE_URL) {
