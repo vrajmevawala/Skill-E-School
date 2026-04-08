@@ -24,11 +24,12 @@ const pathsToTry = [
     path.join(process.cwd(), "dist"),
     path.resolve(__dirname, "../../dist"),
     path.resolve(__dirname, "../dist"),
+    path.join(process.cwd(), "client/dist"),
 ];
 
 let distPath = pathsToTry[0];
 for (const p of pathsToTry) {
-    if (fs.existsSync(p)) {
+    if (fs.existsSync(path.join(p, "index.html"))) {
         distPath = p;
         break;
     }
