@@ -15,42 +15,10 @@ import booksRoutes from "./modules/books/books.routes";
 
 const app: Application = express();
 
-// Security and Performance Middlewares
-app.use(helmet({
-    contentSecurityPolicy: false, // Disable CSP for now to ensure external assets load correctly
-}));
-app.use(compression());
-
-// Diagnostic: Check for DATABASE_URL
-if (process.env.DATABASE_URL) {
-    const maskedUrl = process.env.DATABASE_URL.replace(/:([^@]+)@/, ":****@");
-    console.log(`✅ DATABASE_URL is configured: ${maskedUrl.substring(0, 40)}...`);
-} else {
-    console.error("❌ [CRITICAL] DATABASE_URL is missing! Requests to the database will fail.");
-}
-
-// Standard Middlewares
-app.use(cors({
-    origin: (origin, callback) => {
-        const allowedOrigins = [
-            "http://localhost:5173",
-            "http://localhost:8080",
-            process.env.FRONTEND_URL,
-        ].filter(Boolean);
-        
-        if (!origin || allowedOrigins.includes(origin)) {
-            callback(null, true);
-        } else {
-            callback(new Error("Not allowed by CORS"));
-        }
-    },
-    credentials: true,
-}));
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Path resolution for dist
+// 1. Path resolution for dist folder
 const pathsToTry = [
     path.join(process.cwd(), "dist"),
     path.resolve(__dirname, "../../dist"),
@@ -68,12 +36,18 @@ for (const p of pathsToTry) {
     }
 }
 
-// 1. Serve static files FIRST and AGGRESSIVELY
+// 2. Performance and Security Middlewares
+app.use(helmet({
+    contentSecurityPolicy: false,
+}));
+app.use(compression());
+
+// 3. Serve static files IMMEDIATELY (Priority #1)
+// This ensures assets are never blocked by any JSON-sending middleares or CORS
 if (found) {
-    console.log(`🚀 [SUCCESS] Static files will be served from: ${distPath}`);
-    // Serve the root dist folder
+    console.log(`🚀 [SUCCESS] Static files READY at: ${distPath}`);
     app.use(express.static(distPath, {
-        index: false, // Don't serve index.html automatically, we handle it below
+        index: false,
         etag: true,
         lastModified: true
     }));
@@ -81,8 +55,28 @@ if (found) {
     console.error("❌ [ERROR] NO index.html FOUND IN ANY SEARCH PATH!");
 }
 
+// 4. Standard Parsing Middlewares
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// 5. Optimized CORS Logic
+app.use(cors({
+    origin: (origin, callback) => {
+        const allowedOrigins = [
+            "http://localhost:5173",
+            "http://localhost:8080",
+            process.env.FRONTEND_URL,
+        ].filter(Boolean);
+        
+        if (!origin || allowedOrigins.includes(origin) || origin.includes("onrender.com")) {
+            callback(null, true);
+        } else {
+            console.log(`⚠️ [CORS] Rejected origin: ${origin}`);
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true,
+}));
 
 // Request Logger
 app.use((req, res, next) => {
