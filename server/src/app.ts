@@ -13,6 +13,14 @@ import booksRoutes from "./modules/books/books.routes";
 
 const app: Application = express();
 
+// Diagnostic: Check for DATABASE_URL
+if (process.env.DATABASE_URL) {
+    const maskedUrl = process.env.DATABASE_URL.replace(/:([^@]+)@/, ":****@");
+    console.log(`✅ DATABASE_URL is configured: ${maskedUrl.substring(0, 40)}...`);
+} else {
+    console.error("❌ [CRITICAL] DATABASE_URL is missing! Requests to the database will fail.");
+}
+
 // Standard Middlewares
 app.use(cors({
     origin: (origin, callback) => {
@@ -98,21 +106,27 @@ app.use(errorHandler);
 
 // Serve index.html for all other routes (SPA support)
 app.get("*", (req, res) => {
+    // If it looks like a request for a static file (contains a dot), don't serve index.html with a 200
+    // This helps debug missing assets
+    const isFileRequest = req.url.includes(".");
+    
     if (found) {
-        res.sendFile(path.join(distPath, "index.html"), (err) => {
+        const absolutePath = path.resolve(distPath, "index.html");
+        res.sendFile(absolutePath, (err) => {
             if (err) {
-                console.error("❌ [ERROR] Failed to send index.html:", err);
+                console.error(`❌ [ERROR] Failed to send index.html from path: ${absolutePath}`);
+                console.error(`   Error details: ${err.message}`);
                 res.status(500).json({
                     status: "error",
-                    message: "Failed to load the application. Please try clearing your browser cache.",
-                    details: process.env.NODE_ENV === "development" ? err.message : undefined
+                    message: "Failed to load the application from the server.",
+                    path: process.env.NODE_ENV === "development" ? absolutePath : undefined
                 });
             }
         });
     } else {
-        res.status(200).json({
-            status: "success",
-            message: "Skill E-School API is running",
+        res.status(isFileRequest ? 404 : 200).json({
+            status: isFileRequest ? "error" : "success",
+            message: isFileRequest ? `Resource not found: ${req.url}` : "Skill E-School API is running",
             timestamp: new Date().toISOString()
         });
     }

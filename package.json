@@ -10,7 +10,8 @@
     "typecheck": "tsc",
     "server": "tsx server/src/index.ts",
     "seed": "prisma db seed",
-    "start": "tsx server/src/index.ts",
+    "start": "NODE_ENV=production tsx server/src/index.ts",
+    "start:prod": "NODE_ENV=production tsx server/src/index.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {
