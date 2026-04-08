@@ -46,6 +46,11 @@ const __dirname = path.dirname(__filename);
 console.log("🔍 [DIAGNOSTIC] Checking for SPA files...");
 console.log(`🏠 [DIAGNOSTIC] Current working directory: ${process.cwd()}`);
 console.log(`📂 [DIAGNOSTIC] __dirname: ${__dirname}`);
+try {
+    console.log(`Contents of ${process.cwd()}: [${fs.readdirSync(process.cwd()).join(", ")}]`);
+} catch (e) {
+    console.error("Failed to list directory contents");
+}
 
 const pathsToTry = [
     path.join(process.cwd(), "dist"),
