@@ -19,7 +19,11 @@ app.use(cors());
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Potential paths for dist folder
+// Detailed diagnostics for dist folder
+console.log("🔍 [DIAGNOSTIC] Checking for SPA files...");
+console.log(`🏠 [DIAGNOSTIC] Current working directory: ${process.cwd()}`);
+console.log(`📂 [DIAGNOSTIC] __dirname: ${__dirname}`);
+
 const pathsToTry = [
     path.join(process.cwd(), "dist"),
     path.resolve(__dirname, "../../dist"),
@@ -28,16 +32,22 @@ const pathsToTry = [
 ];
 
 let distPath = pathsToTry[0];
+let found = false;
+
 for (const p of pathsToTry) {
-    if (fs.existsSync(path.join(p, "index.html"))) {
+    const indexPath = path.join(p, "index.html");
+    const exists = fs.existsSync(indexPath);
+    console.log(`   - Checking: ${p} -> ${exists ? "✅ Found index.html" : "❌ Not found"}`);
+    if (exists && !found) {
         distPath = p;
-        break;
+        found = true;
     }
 }
 
-console.log(`📂 Static files will be served from: ${distPath}`);
-if (!fs.existsSync(path.join(distPath, "index.html"))) {
-    console.warn(`⚠️  Warning: index.html not found in ${distPath}`);
+if (!found) {
+    console.error("❌ [ERROR] NO index.html FOUND IN ANY SEARCH PATH!");
+} else {
+    console.log(`🚀 [SUCCESS] Static files will be served from: ${distPath}`);
 }
 
 app.use(express.static(distPath));
