@@ -14,7 +14,22 @@ import booksRoutes from "./modules/books/books.routes";
 const app: Application = express();
 
 // Standard Middlewares
-app.use(cors());
+app.use(cors({
+    origin: (origin, callback) => {
+        const allowedOrigins = [
+            "http://localhost:5173",
+            "http://localhost:8080",
+            process.env.FRONTEND_URL,
+        ].filter(Boolean);
+        
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error("Not allowed by CORS"));
+        }
+    },
+    credentials: true,
+}));
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

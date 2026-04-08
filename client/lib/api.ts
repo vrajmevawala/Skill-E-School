@@ -10,8 +10,12 @@ async function apiFetch<T = any>(endpoint: string, options: ApiOptions = {}): Pr
     const { token: providedToken, headers, ...rest } = options;
     const token = providedToken || localStorage.getItem("token");
 
+    const cleanBase = API_BASE.replace(/\/$/, "");
+    const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
+    const url = `${cleanBase}${cleanEndpoint}`;
+
     try {
-        const res = await fetch(`${API_BASE}${endpoint}`, {
+        const res = await fetch(url, {
             headers: {
                 "Content-Type": "application/json",
                 ...(token ? { Authorization: `Bearer ${token}` } : {}),
