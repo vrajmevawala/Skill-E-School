@@ -18,22 +18,41 @@ const app: Application = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// 1. Path resolution for dist folder
+// 1. Exhaustive Path Resolution for the 'dist' folder
 const pathsToTry = [
     path.join(process.cwd(), "dist"),
     path.resolve(__dirname, "../../dist"),
     path.resolve(__dirname, "../dist"),
+    path.join(process.cwd(), "client/dist"),
+    path.resolve(process.cwd(), "../dist"),
 ];
+
+console.log("🔍 [DIAGNOSTIC] Locating UI assets...");
+console.log(`🏠 [DIAGNOSTIC] CWD: ${process.cwd()}`);
 
 let distPath = pathsToTry[0];
 let found = false;
 
 for (const p of pathsToTry) {
-    if (fs.existsSync(path.join(p, "index.html"))) {
+    const indexPath = path.join(p, "index.html");
+    const exists = fs.existsSync(indexPath);
+    console.log(`   - Checking: ${p} -> ${exists ? "✅ Found" : "❌ Not found"}`);
+    if (exists && !found) {
         distPath = p;
         found = true;
-        break;
     }
+}
+
+if (!found) {
+    console.error("❌ [CRITICAL] Could not find dist/index.html anywhere!");
+    // Emergency: List directories to find where it went
+    try {
+        const items = fs.readdirSync(process.cwd());
+        console.log(`📂 [DIAGNOSTIC] Root contents: [${items.join(", ")}]`);
+        if (items.includes("client")) {
+            console.log(`📂 [DIAGNOSTIC] Client contents: [${fs.readdirSync(path.join(process.cwd(), "client")).join(", ")}]`);
+        }
+    } catch (e) {}
 }
 
 // 2. Performance and Security Middlewares
