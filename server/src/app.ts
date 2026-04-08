@@ -2,6 +2,7 @@ import express, { Application } from "express";
 import cors from "cors";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 import { errorHandler } from "./middlewares/error-handler";
 import authRoutes from "./modules/auth/auth.routes";
 import coursesRoutes from "./modules/courses/courses.routes";
@@ -17,7 +18,26 @@ app.use(cors());
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const distPath = path.resolve(__dirname, "../../dist");
+
+// Potential paths for dist folder
+const pathsToTry = [
+    path.join(process.cwd(), "dist"),
+    path.resolve(__dirname, "../../dist"),
+    path.resolve(__dirname, "../dist"),
+];
+
+let distPath = pathsToTry[0];
+for (const p of pathsToTry) {
+    if (fs.existsSync(p)) {
+        distPath = p;
+        break;
+    }
+}
+
+console.log(`📂 Static files will be served from: ${distPath}`);
+if (!fs.existsSync(path.join(distPath, "index.html"))) {
+    console.warn(`⚠️  Warning: index.html not found in ${distPath}`);
+}
 
 app.use(express.static(distPath));
 app.use(express.json());
