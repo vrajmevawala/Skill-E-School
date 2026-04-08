@@ -1,5 +1,7 @@
 import express, { Application } from "express";
 import cors from "cors";
+import path from "path";
+import { fileURLToPath } from "url";
 import { errorHandler } from "./middlewares/error-handler";
 import authRoutes from "./modules/auth/auth.routes";
 import coursesRoutes from "./modules/courses/courses.routes";
@@ -12,6 +14,12 @@ const app: Application = express();
 
 // Standard Middlewares
 app.use(cors());
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const distPath = path.resolve(__dirname, "../../dist");
+
+app.use(express.static(distPath));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -41,5 +49,10 @@ app.use("/api/books", booksRoutes);
 
 // Error Handling
 app.use(errorHandler);
+
+// Serve index.html for all other routes (SPA support)
+app.get("*", (req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
+});
 
 export default app;
