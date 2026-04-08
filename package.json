@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && echo --- Build output contents --- && (dir dist || ls -R dist || echo dist folder not found)",
+    "build": "vite build",
     "preview": "vite preview",
     "format.fix": "prettier --write .",
     "typecheck": "tsc",
