@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite client",
-    "build": "vite build client && echo '--- Build output contents ---' && ls -R dist || echo 'dist folder not found'",
-    "preview": "vite preview client",
+    "dev": "vite",
+    "build": "vite build && echo --- Build output contents --- && (dir dist || ls -R dist || echo dist folder not found)",
+    "preview": "vite preview",
     "format.fix": "prettier --write .",
     "typecheck": "tsc",
     "server": "tsx server/src/index.ts",
@@ -52,9 +52,7 @@
     "typescript": "^5.9.2",
     "vite": "^7.1.2",
     "zod": "^3.25.76",
-    "zustand": "^5.0.11"
-  },
-  "devDependencies": {
+    "zustand": "^5.0.11",
     "@hookform/resolvers": "^5.2.1",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -83,6 +81,16 @@
     "@radix-ui/react-toggle": "^1.1.9",
     "@radix-ui/react-toggle-group": "^1.1.10",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "cmdk": "^1.1.1",
+    "framer-motion": "^12.23.12",
+    "vaul": "^1.1.2",
+    "date-fns": "^4.1.0",
+    "embla-carousel-react": "^8.6.0",
+    "globals": "^16.3.0",
+    "input-otp": "^1.4.2",
+    "next-themes": "^0.4.6"
+  },
+  "devDependencies": {
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18.0",
     "@swc/core": "^1.13.3",
@@ -95,16 +103,8 @@
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
     "@types/three": "^0.176.0",
-    "cmdk": "^1.1.1",
-    "date-fns": "^4.1.0",
-    "embla-carousel-react": "^8.6.0",
-    "framer-motion": "^12.23.12",
-    "globals": "^16.3.0",
-    "input-otp": "^1.4.2",
-    "next-themes": "^0.4.6",
     "postcss": "^8.5.6",
     "prettier": "^3.6.2",
-    "vaul": "^1.1.2",
     "vitest": "^3.2.4"
   },
   "prisma": {
