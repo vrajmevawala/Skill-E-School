@@ -30,4 +30,4 @@ dist-ssr
 .npmrc
 
 .config/
-!.env
+.env
