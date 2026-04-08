@@ -126,7 +126,9 @@ app.get("*", (req, res) => {
     } else {
         res.status(isFileRequest ? 404 : 200).json({
             status: isFileRequest ? "error" : "success",
-            message: isFileRequest ? `Resource not found: ${req.url}` : "Skill E-School API is running",
+            message: isFileRequest 
+                ? `Resource not found: ${req.url}` 
+                : "Skill E-School API is running. If you are seeing this on your frontend URL, it means the 'dist' folder is missing. Please check your Render Build Command.",
             timestamp: new Date().toISOString()
         });
     }
