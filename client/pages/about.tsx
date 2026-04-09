@@ -25,8 +25,8 @@ export default function About() {
                   Meet Your Coach
                 </Badge>
                 <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight">
-                  The Man Behind 
-                <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight mt-2"><span className="text-primary">Skill E-School</span></h1>
+                  The Man Behind
+                  <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight text-slate-900 leading-tight mt-2"><span className="text-primary">Skill E-School</span></h1>
                 </h1>
               </div>
 
@@ -37,27 +37,30 @@ export default function About() {
                 <p>
                   His journey of 30+ years in sales and marketing deepening his conviction that the gap between where most business owners are and where they want to be is not a gap of intelligence—it is a gap of system.
                 </p>
+                <p>
+                  That conviction became Skill E-School — India's most systematic, skill-based business growth school. Built not on borrowed Western frameworks but on the lived reality of Indian professionals navigating the specific challenges and opportunities of the Indian business environment.
+                </p>
               </div>
 
               <div className="p-6 bg-[#0f172a] text-white rounded-xl border-l-4 border-primary shadow-lg">
                 <p className="text-lg md:text-xl font-medium italic mb-2">
-                  "The most powerful investment you will ever make is not in your business — it is in the mind that runs your business."
+                  "Your business does not need a better strategy. It needs a better thinker. And the most powerful investment you will ever make is not in your business — it is in the mind that runs your business."
                 </p>
-                <p className="text-sm font-bold text-primary">— Parijat Dave</p>
+                <p className="text-sm font-bold text-primary">— Parijat Dave, Business Growth Coach & Founder, Skill E-School</p>
               </div>
             </div>
 
             <div className="order-1 lg:order-2 flex justify-center lg:justify-center">
               <div className="relative w-full max-w-[400px]">
                 <div className="relative z-10 rounded-xl overflow-hidden shadow-xl border-4 border-white aspect-[4/5]">
-                  <img 
-                    src={coachImages[0]} 
-                    alt="Parijat Dave" 
+                  <img
+                    src={coachImages[0]}
+                    alt="Parijat Dave"
                     className="w-full h-full object-cover"
                   />
                 </div>
                 <div className="absolute -bottom-4 -right-4 w-full h-full border border-primary rounded-xl -z-10 bg-primary/5"></div>
-                
+
                 <div className="absolute -top-4 -left-4 bg-white p-4 rounded-lg shadow-md border z-20 hidden md:block">
                   <p className="text-2xl font-bold text-primary">30+</p>
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Years Exp</p>
@@ -92,12 +95,12 @@ export default function About() {
                 <p className="text-xs text-slate-500 uppercase">Sales & Mktg</p>
               </div>
               <div className="text-center space-y-1">
-                <p className="font-bold text-primary">SES Founder</p>
+                <p className="font-bold text-primary">Founder</p>
                 <p className="text-xs text-slate-500 uppercase">Skill E-School</p>
               </div>
               <div className="text-center space-y-1">
-                <p className="font-bold text-primary">Gujarat Hub</p>
-                <p className="text-xs text-slate-500 uppercase">Ahmedabad</p>
+                <p className="font-bold text-primary">Ahmedabad</p>
+                <p className="text-xs text-slate-500 uppercase">Gujarat</p>
               </div>
               <div className="text-center space-y-1">
                 <p className="font-bold text-primary">Neuroscience</p>
@@ -131,7 +134,7 @@ export default function About() {
                 To become India's most trusted skill-based business growth school — a place where every business owner, solopreneur, and professional can access frameworks, tools, and a community that transforms their potential into measurable, lasting results.
               </p>
               <p className="text-slate-400">
-                We envision an India where business growth is no longer a matter of luck, connections, or inherited advantage — but a learnable, teachable outcome for every professional.
+                We envision an India where business growth is no longer a matter of luck, connections, or inherited advantage — but a learnable, teachable, and systematically achievable outcome for every professional who commits to the work.
               </p>
             </Card>
 
@@ -141,10 +144,10 @@ export default function About() {
               </div>
               <h3 className="text-2xl font-bold mb-6">Our Mission</h3>
               <p className="text-slate-300 text-lg leading-relaxed mb-6 italic">
-                To equip Indian business owners with practical, skill-based frameworks that deliver real, measurable, and sustainable business growth — by building the mindset, skills, systems, and community.
+                To equip Indian business owners with practical, skill-based frameworks that deliver real, measurable, and sustainable business growth — by building the mindset, skills, systems, and community that make excellent performance the default rather than the exception.
               </p>
               <p className="text-slate-400">
-                We exist to close the gap between knowledge and application — because learning that is not applied within 48 hours fades by more than 75%.
+                We exist to close the gap between knowledge and application — because learning that is not applied within 48 hours fades by more than 75%. At Skill E-School, every concept must be lived, not just understood.
               </p>
             </Card>
           </div>
@@ -160,44 +163,44 @@ export default function About() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-             {[
-              { 
-                id: "01", 
-                title: "Application-First Learning", 
-                desc: "No other training system holds you to this standard — apply what you learn within 48 hours to succeed.", 
-                icon: <Zap className="h-6 w-6" /> 
+            {[
+              {
+                id: "01",
+                title: "Application-First Learning",
+                desc: "No other training system holds you to this standard — apply what you learn within 48 hours to succeed.",
+                icon: <Zap className="h-6 w-6" />
               },
-              { 
-                id: "02", 
-                title: "Built for Indian Reality", 
-                desc: "Frameworks built from 30 years of coaching Indian professionals navigating specific cultural challenges.", 
-                icon: <Globe className="h-6 w-6" /> 
+              {
+                id: "02",
+                title: "Built for Indian Reality",
+                desc: "Frameworks built from 30 years of coaching Indian professionals navigating specific cultural challenges.",
+                icon: <Globe className="h-6 w-6" />
               },
-              { 
-                id: "03", 
-                title: "The Learn-Do-Teach Cycle", 
-                desc: "We use neuroscience to ensure you learn with intent to teach, compounding mastery exponentially.", 
-                icon: <GraduationCap className="h-6 w-6" /> 
+              {
+                id: "03",
+                title: "The Learn-Do-Teach Cycle",
+                desc: "We use neuroscience to ensure you learn with intent to teach, compounding mastery exponentially.",
+                icon: <GraduationCap className="h-6 w-6" />
               },
-              { 
-                id: "04", 
-                title: "Community as Curriculum", 
-                desc: "Professionals in our community achieve results 2-3x faster than those engaging with content alone.", 
-                icon: <Users className="h-6 w-6" /> 
+              {
+                id: "04",
+                title: "Community as Curriculum",
+                desc: "Professionals in our community achieve results 2-3x faster than those engaging with content alone.",
+                icon: <Users className="h-6 w-6" />
               },
-              { 
-                id: "05", 
-                title: "Measurable Growth", 
-                desc: "Every programme defines specific, observable business outcomes. Transformation must become tangible.", 
-                icon: <TrendingUp className="h-6 w-6" /> 
+              {
+                id: "05",
+                title: "Measurable Growth",
+                desc: "Every programme defines specific, observable business outcomes. Transformation must become tangible.",
+                icon: <TrendingUp className="h-6 w-6" />
               },
-              { 
-                id: "06", 
-                title: "A System, Not a Course", 
-                desc: "Mindset, strategy, and performance mastery integrated into one coherent, progressive system.", 
-                icon: <Briefcase className="h-6 w-6" /> 
+              {
+                id: "06",
+                title: "A System, Not a Course",
+                desc: "Mindset, strategy, and performance mastery integrated into one coherent, progressive system.",
+                icon: <Briefcase className="h-6 w-6" />
               }
-             ].map((feature) => (
+            ].map((feature) => (
               <Card key={feature.id} className="border-none shadow-lg hover:shadow-xl transition-all duration-300 bg-slate-50 group">
                 <CardHeader>
                   <div className="text-4xl font-bold text-primary/10 mb-4 group-hover:text-primary/20 transition-colors">{feature.id}</div>
@@ -210,7 +213,7 @@ export default function About() {
                   </CardDescription>
                 </CardHeader>
               </Card>
-             ))}
+            ))}
           </div>
         </div>
       </section>
@@ -229,13 +232,13 @@ export default function About() {
                 <img src={coachImages[4]} className="rounded-2xl shadow-lg w-full aspect-square object-cover mt-8" alt="Coach community" />
               </div>
             </div>
-            
+
             <div className="space-y-12">
               <div className="space-y-4">
                 <h3 className="text-3xl font-bold text-slate-900 font-serif">What Parijat Coaches</h3>
                 <div className="h-1 w-16 bg-primary"></div>
               </div>
-              
+
               <div className="space-y-6">
                 {[
                   { title: "Mindset Architecture", desc: "The 21 shifts that separate consistent growers from perpetual starters." },

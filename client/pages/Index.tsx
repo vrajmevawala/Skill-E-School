@@ -1,16 +1,16 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  BookOpen, 
-  Users, 
-  Briefcase, 
-  GraduationCap, 
-  Video, 
-  Calendar, 
-  ArrowRight, 
-  CheckCircle2, 
-  Globe, 
+import {
+  BookOpen,
+  Users,
+  Briefcase,
+  GraduationCap,
+  Video,
+  Calendar,
+  ArrowRight,
+  CheckCircle2,
+  Globe,
   Zap,
   ShieldCheck,
   TrendingUp,
@@ -36,7 +36,7 @@ export default function Index() {
           courseService.getAll("limit=4"),
           webinarService.getAll()
         ]);
-        
+
         setFeaturedCourses(coursesRes.courses || []);
         if (webinarsRes.webinars && webinarsRes.webinars.length > 0) {
           // Find the soonest upcoming webinar
@@ -65,6 +65,24 @@ export default function Index() {
     { name: "Vestige", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQo9ttoIFa6rzg8B7xeOzuXd10sXwRJ7ICalw&s" },
   ];
 
+  const testimonials = [
+    {
+      quote: "The 48-hour application rule changed everything. I had attended 6 other programmes and read 30+ books. Nothing worked until I was forced to apply — not plan, not intend — but actually apply within 48 hours. My conversion rate jumped 60% in 4 months.",
+      name: "[STUDENT NAME]",
+      subtitle: "Business Owner · Ahmedabad · Level 2 Graduate"
+    },
+    {
+      quote: "What Parijat teaches isn't theory. Every single framework he teaches, he has lived. The SES Diagnostic told me more about my business in 30 minutes than I had figured out in 5 years. I now know exactly where to focus and where I was wasting energy.",
+      name: "[STUDENT NAME]",
+      subtitle: "Solopreneur · Surat · Level 1 Graduate"
+    },
+    {
+      quote: "The community is not an add-on — it is the programme. My peer cohort has become my growth board. We challenge each other, hold each other accountable, and celebrate milestones together. My business grew 45% in the first year. My stress halved.",
+      name: "[STUDENT NAME]",
+      subtitle: "Professional Trainer · Vadodara · Level 3 Graduate"
+    }
+  ];
+
   return (
     <div className="flex flex-col w-full">
       {/* Hero Section */}
@@ -79,7 +97,7 @@ export default function Index() {
             <rect width="100%" height="100%" fill="url(#grid)" />
           </svg>
         </div>
-        
+
         <div className="container relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8 text-center lg:text-left">
@@ -87,15 +105,15 @@ export default function Index() {
                 The Future of Blended Learning
               </Badge>
               <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight text-slate-900 leading-tight">
-                Empower Your Future with <span className="text-primary ">Skill E-School</span>
+                Stop Hustling<br /><span className="text-primary ">Start Learning</span>
               </h1>
               <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto lg:mx-0">
-                A comprehensive platform for modern learners and aspiring entrepreneurs. Master new skills, attend live webinars, and manage your own education franchise.
+                India's most systematic business growth coaching school — built on 30 years of real-world experience, neuroscience, and the only framework designed specifically for Indian business owners.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4">
                 <Button size="lg" className="text-lg px-8 py-6 h-auto hover:bg-[#0f172a] hover:text-white" asChild>
                   <Link to={isAuthenticated ? "/courses" : "/login?course=true"}>
-                    Start Learning Now
+                    Take Free Diagnostic
                     <ArrowRight className="ml-2 h-5 w-5 inline-block" />
                   </Link>
                 </Button>
@@ -115,15 +133,15 @@ export default function Index() {
                   </div>
                 </div>
                 <p className="text-sm text-slate-500 font-medium">
-                  Joined by 100+ students 
+                  Trusted by solopreneurs, professionals & business owners across Gujarat and India
                 </p>
               </div>
             </div>
             <div className="relative">
               <div className="relative z-10 bg-white rounded-2xl shadow-2xl overflow-hidden border">
-                <img 
-                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1000" 
-                  alt="Learning together" 
+                <img
+                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=1000"
+                  alt="Learning together"
                   className="w-full h-auto"
                 />
                 {highlightWebinar && (
@@ -135,8 +153,8 @@ export default function Index() {
                       <div>
                         <p className="font-semibold">Live Webinar: {highlightWebinar.title}</p>
                         <p className="text-sm text-white/80">
-                          {new Date(highlightWebinar.date) > new Date() 
-                            ? `Scheduled for ${new Date(highlightWebinar.date).toLocaleDateString()}` 
+                          {new Date(highlightWebinar.date) > new Date()
+                            ? `Scheduled for ${new Date(highlightWebinar.date).toLocaleDateString()}`
                             : "Available on-demand"}
                         </p>
                       </div>
@@ -271,9 +289,9 @@ export default function Index() {
                 <Link key={course.id} to={`/courses/${course.id}`}>
                   <Card className="overflow-hidden group h-full hover:shadow-lg transition-all cursor-pointer">
                     <div className="relative h-48 overflow-hidden">
-                      <img 
-                        src={course.thumbnail || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=600"} 
-                        alt={course.title} 
+                      <img
+                        src={course.thumbnail || "https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&q=80&w=600"}
+                        alt={course.title}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       />
                       <Badge className="absolute top-4 left-4 bg-white/90 text-primary hover:bg-white">
@@ -360,7 +378,7 @@ export default function Index() {
               </div>
               <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-10 py-6 h-auto text-lg">
                 <Link to='/franchise'>
-                  Apply for Franchise 
+                  Apply for Franchise
                 </Link>
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -408,6 +426,27 @@ export default function Index() {
         </div>
       </section>
 
+      {/* Testimonials */}
+      <section className="py-20 bg-[#0f172a]">
+        <div className="container">
+          <h2 className="text-3xl md:text-3xl font-serif text-primary mb-10">What Our Students Say</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {testimonials.map((t, idx) => (
+              <div key={idx} className="bg-white p-8 flex flex-col h-full rounded-sm">
+                <div className="text-6xl text-primary/30 font-serif leading-none h-12 mb-2">“</div>
+                <p className="text-slate-800 italic leading-relaxed mb-8 flex-1">
+                  {t.quote}
+                </p>
+                <div>
+                  <p className="text-primary font-bold uppercase tracking-wider text-sm">{t.name}</p>
+                  <p className="text-slate-500 text-xs mt-1">{t.subtitle}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Trust Section - Sliding Partners Overlay */}
       <section className="py-16 bg-white border-t overflow-hidden">
         <div className="container mb-12">
@@ -416,17 +455,17 @@ export default function Index() {
             <p className="text-slate-500 max-w-2xl mx-auto italic font-serif">Trusted by world-class financial institutions, energy leaders, and major consumer brands.</p>
           </div>
         </div>
-        
+
         <div className="relative flex overflow-hidden group">
           {/* Continuous scrolling container */}
           <div className="animate-marquee flex gap-12 items-center whitespace-nowrap min-w-full">
             {[...partners, ...partners].map((partner, index) => (
               <div key={index} className="flex flex-col items-center justify-center min-w-[160px] px-4">
                 <div className="h-20 flex items-center justify-center transition-all duration-300 transform group-hover:scale-110">
-                  <img 
-                    src={partner.logo} 
-                    alt={partner.name} 
-                    className="max-h-full max-w-full object-contain filter-none drop-shadow-md" 
+                  <img
+                    src={partner.logo}
+                    alt={partner.name}
+                    className="max-h-full max-w-full object-contain filter-none drop-shadow-md"
                   />
                 </div>
                 <p className="mt-4 text-[11px] font-bold text-slate-500 tracking-wider font-serif uppercase text-center">{partner.name}</p>
