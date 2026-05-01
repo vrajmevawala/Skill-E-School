@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
-// Helper to replace Role enum since it's removed for SQLite
+// Helper to replace Role enum since it's removed for SQLite (but works for Postgres too)
 const Role = {
     ADMIN: "ADMIN",
     TRAINER: "TRAINER",
@@ -12,12 +12,13 @@ const Role = {
 };
 
 async function main() {
-    const hashedPassword = await bcrypt.hash("       ", 12);
+    // Use a clearer password for testing
+    const hashedPassword = await bcrypt.hash("Admin@123", 12);
 
     // 1. Create Admins
     const admin = await prisma.user.upsert({
         where: { email: "admin@skille.com" },
-        update: {},
+        update: { password: hashedPassword },
         create: {
             email: "admin@skille.com",
             password: hashedPassword,
@@ -46,8 +47,8 @@ async function main() {
                     hourlyRate: 50.0,
                     slots: {
                         create: [
-                            { startTime: new Date("2026-03-01T10:00:00Z"), endTime: new Date("2026-03-01T11:00:00Z") },
-                            { startTime: new Date("2026-03-01T14:00:00Z"), endTime: new Date("2026-03-01T15:00:00Z") },
+                            { startTime: new Date("2026-06-01T10:00:00Z"), endTime: new Date("2026-06-01T11:00:00Z") },
+                            { startTime: new Date("2026-06-01T14:00:00Z"), endTime: new Date("2026-06-01T15:00:00Z") },
                         ],
                     },
                 },
@@ -93,36 +94,66 @@ async function main() {
         create: { name: "Development" },
     });
 
-    const course = await prisma.course.create({
-        data: {
-            title: "Mastering React and Node.js",
-            description: "A comprehensive guide to building production-ready applications.",
-            level: "Intermediate",
-            price: 49.99,
-            categoryId: devCategory.id,
-            trainerId: trainer.id,
-            lessons: {
-                create: [
-                    { title: "Introduction to Hooks", order: 1, duration: 20 },
-                    { title: "Prisma and Databases", order: 2, duration: 45 },
-                ],
+    // Check if course exists before creating to avoid duplicates in Postgres
+    const existingCourse = await prisma.course.findFirst({ where: { title: "Mastering React and Node.js" } });
+    if (!existingCourse) {
+        await prisma.course.create({
+            data: {
+                title: "Mastering React and Node.js",
+                description: "A comprehensive guide to building production-ready applications.",
+                level: "Intermediate",
+                price: 49.99,
+                categoryId: devCategory.id,
+                trainerId: trainer.id,
+                lessons: {
+                    create: [
+                        { title: "Introduction to Hooks", order: 1, duration: 20 },
+                        { title: "Prisma and Databases", order: 2, duration: 45 },
+                    ],
+                },
+                resources: {
+                    create: [{ name: "Source Code", type: "zip", url: "https://example.com/src.zip" }],
+                },
             },
-            resources: {
-                create: [{ name: "Source Code", type: "zip", url: "https://example.com/src.zip" }],
-            },
-        },
-    });
+        });
+    }
 
     // 5. Webinars
-    await prisma.webinar.create({
-        data: {
-            title: "The Future of Web Development 2026",
-            description: "Live session on upcoming trends.",
-            scheduledAt: new Date("2026-04-15T15:00:00Z"),
-            duration: 60,
-            isFree: true,
-            googleFormLink: "https://forms.gle/example123",
-        },
+    
+    // Clear existing webinars to avoid duplicates in testing
+    await prisma.webinar.deleteMany({});
+
+    await prisma.webinar.createMany({
+        data: [
+            {
+                title: "Cloud Computing Masterclass",
+                description: "Learn Cloud computing fundamentals and advanced architectures.",
+                scheduledAt: new Date("2026-04-03T07:00:00Z"),
+                duration: 60,
+                status: "COMPLETED",
+                isFree: false,
+                price: 499,
+                googleFormLink: "https://docs.google.com/forms/d/e/1FAIpQLSecGHiWvnBluLSfCNcMrow8yEKICYnRvslqbbZb7wGNPRpqAg/viewform?usp=dialog",
+            },
+            {
+                title: "Hands On Building the Telescope",
+                description: "Learn the basic making of telescope and astronomical concepts.",
+                scheduledAt: new Date("2026-05-05T03:59:00Z"),
+                duration: 90,
+                status: "UPCOMING",
+                isFree: true,
+                googleFormLink: "https://docs.google.com/forms/d/e/1FAIpQLSecGHiWvnBluLSfCNcMrow8yEKICYnRvslqbbZb7wGNPRpqAg/viewform?usp=dialog",
+            },
+            {
+                title: "The Future of Web Development 2026",
+                description: "Live session on upcoming trends in AI and Web 3.0.",
+                scheduledAt: new Date("2026-06-15T15:00:00Z"),
+                duration: 60,
+                status: "UPCOMING",
+                isFree: true,
+                googleFormLink: "https://forms.gle/example123",
+            }
+        ]
     });
 
     console.log("✅ Database seeded successfully!");
