@@ -1,52 +1,34 @@
-const API_URL = "/api/books";
+import { api } from "../lib/api";
+
+const API_URL = "/books";
 
 export const bookService = {
     async getAll() {
-        const response = await fetch(API_URL);
-        return await response.json();
+        return api.get(API_URL);
     },
 
     async getById(id: string) {
-        const response = await fetch(`${API_URL}/${id}`);
-        return await response.json();
+        return api.get(`${API_URL}/${id}`);
     },
 
     async checkAccess(id: string) {
-        const response = await fetch(`${API_URL}/${id}/access`);
-        return await response.json();
+        return api.get(`${API_URL}/${id}/access`);
     },
 
     async purchase(id: string) {
-        const response = await fetch(`${API_URL}/${id}/purchase`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" }
-        });
-        return await response.json();
+        return api.post(`${API_URL}/${id}/purchase`, {});
     },
 
     // Admin methods
     async create(data: any) {
-        const response = await fetch(API_URL, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        });
-        return await response.json();
+        return api.post(API_URL, data);
     },
 
     async update(id: string, data: any) {
-        const response = await fetch(`${API_URL}/${id}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        });
-        return await response.json();
+        return api.patch(`${API_URL}/${id}`, data);
     },
 
     async delete(id: string) {
-        const response = await fetch(`${API_URL}/${id}`, {
-            method: "DELETE"
-        });
-        return response.ok;
+        return api.delete(`${API_URL}/${id}`);
     }
 };

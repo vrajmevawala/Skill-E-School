@@ -18,8 +18,8 @@ export default function Books() {
             setLoading(true);
             try {
                 const res = await bookService.getAll();
-                if (res.status === "success") {
-                    setBooks(res.data.books);
+                if (res && res.books) {
+                    setBooks(res.books);
                 }
             } catch (err) {
                 console.error("Failed to fetch books", err);

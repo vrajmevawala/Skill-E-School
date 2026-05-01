@@ -84,8 +84,8 @@ export default function AdminBooks() {
         setLoading(true);
         try {
             const res = await bookService.getAll();
-            if (res.status === "success") {
-                setBooks(res.data.books);
+            if (res && res.books) {
+                setBooks(res.books);
             }
         } catch (err) {
             console.error("AdminBooks: Failed to fetch", err);
@@ -102,14 +102,14 @@ export default function AdminBooks() {
         try {
             if (editingBook) {
                 const res = await bookService.update(editingBook.id, values);
-                if (res.status === "success") {
+                if (res && res.book) {
                     toast({ title: "Success", description: "Book updated successfully" });
                     setIsDialogOpen(false);
                     fetchBooks();
                 }
             } else {
                 const res = await bookService.create(values);
-                if (res.status === "success") {
+                if (res && res.book) {
                     toast({ title: "Success", description: "New book added to library" });
                     setIsDialogOpen(false);
                     fetchBooks();

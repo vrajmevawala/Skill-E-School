@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { webinarService } from "@/services/webinar.service";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/auth";
+import { cn } from "@/lib/utils";
 
 interface Webinar {
     id: string;
@@ -19,6 +20,7 @@ interface Webinar {
     isFree: boolean;
     price: number | null;
     googleFormLink: string | null;
+    status?: string;
 }
 
 export default function Webinars() {
@@ -68,6 +70,150 @@ export default function Webinars() {
         return timeStr;
     };
 
+    const upcomingWebinars = webinars.filter(w => w.status !== "COMPLETED");
+    const pastWebinars = webinars.filter(w => w.status === "COMPLETED");
+
+    const renderWebinarCard = (webinar: Webinar, isPast: boolean) => (
+        <Card key={webinar.id} className={cn(
+            "flex flex-col hover:shadow-lg transition-shadow border-none shadow-md overflow-hidden",
+            isPast && "opacity-80 grayscale-[0.2]"
+        )}>
+            <div className="relative aspect-video overflow-hidden rounded-t-xl group">
+                <img
+                    src={webinar.thumbnail || "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=600&auto=format&fit=crop"}
+                    alt={webinar.title}
+                    className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute top-2 right-2 flex gap-2">
+                    {isPast && <Badge variant="outline" className="bg-slate-100 text-slate-600 border-none">Past</Badge>}
+                    <Badge variant={webinar.isFree ? "secondary" : "default"}>
+                        {webinar.isFree ? "Free" : "Paid"}
+                    </Badge>
+                </div>
+            </div>
+            <CardHeader>
+                <div className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">
+                    {isPast ? "Past Webinar" : "Live Webinar"}
+                </div>
+                <CardTitle className="line-clamp-2">{webinar.title}</CardTitle>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
+                    <Calendar className="h-4 w-4" /> {formatDate(webinar.scheduledAt)}
+                </div>
+            </CardHeader>
+            <CardContent className="flex-1">
+                {webinar.description && (
+                    <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
+                        {webinar.description}
+                    </p>
+                )}
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {formatTime(webinar.scheduledAt, webinar.duration)}</span>
+                    <span className="flex items-center gap-1"><Video className="h-4 w-4" /> Online</span>
+                </div>
+            </CardContent>
+            <CardFooter className="pt-0">
+                <Dialog>
+                    <DialogTrigger asChild>
+                        <Button className="w-full" variant={isPast ? "outline" : "default"}>
+                            {isPast ? "View Details" : (webinar.isFree ? "View Details" : "Enroll Now")}
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-3xl">
+                        <DialogHeader>
+                            <DialogTitle>{webinar.title}</DialogTitle>
+                            <DialogDescription>
+                                Scheduled for: {formatDate(webinar.scheduledAt)} • {formatTime(webinar.scheduledAt, webinar.duration)}
+                                {isPast && <span className="ml-2 text-orange-600 font-medium">(This event has ended)</span>}
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+                            <div className="md:col-span-2 space-y-4">
+                                <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-lg relative">
+                                    <img
+                                        src={webinar.thumbnail || "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=600&auto=format&fit=crop"}
+                                        alt={webinar.title}
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+
+                                <div className="space-y-2">
+                                    <h3 className="font-semibold text-lg">About this Webinar</h3>
+                                    <p className="text-muted-foreground">{webinar.description || "Join us for this exciting live session where we dive deep into industry topics and share valuable insights."}</p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                <div className="border rounded-lg p-4">
+                                    <h3 className="font-semibold mb-3 flex items-center gap-2">
+                                        <Calendar className="h-4 w-4" /> Event Details
+                                    </h3>
+                                    <ul className="space-y-3">
+                                        <li className="flex flex-col text-sm">
+                                            <span className="font-medium">Date</span>
+                                            <span className="text-muted-foreground">{formatDate(webinar.scheduledAt)}</span>
+                                        </li>
+                                        <li className="flex flex-col text-sm">
+                                            <span className="font-medium">Time</span>
+                                            <span className="text-muted-foreground">{formatTime(webinar.scheduledAt, webinar.duration)}</span>
+                                        </li>
+                                        <li className="flex flex-col text-sm">
+                                            <span className="font-medium">Duration</span>
+                                            <span className="text-muted-foreground">{webinar.duration || 60} minutes</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div className="space-y-3">
+                                    {isPast ? (
+                                        <Button className="w-full" disabled>
+                                            Registration Closed
+                                        </Button>
+                                    ) : webinar.googleFormLink ? (
+                                        <Button className="w-full" asChild>
+                                            <a href={webinar.googleFormLink} target="_blank" rel="noopener noreferrer">
+                                                Register on Google Form
+                                            </a>
+                                        </Button>
+                                    ) : (
+                                        <Button 
+                                            className="w-full" 
+                                            onClick={() => handleRegister(webinar.id)}
+                                            disabled={registering === webinar.id}
+                                        >
+                                            {registering === webinar.id ? (
+                                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Registering...</>
+                                            ) : (
+                                                "Register for Webinar"
+                                            )}
+                                        </Button>
+                                    )}
+
+                                    {!isPast && webinar.meetingUrl && (
+                                        <Button className="w-full" variant="outline" asChild>
+                                            <a href={webinar.meetingUrl} target="_blank" rel="noopener noreferrer">
+                                                Join Meeting
+                                            </a>
+                                        </Button>
+                                    )}
+
+                                    {!isPast && !webinar.isFree && !webinar.googleFormLink && (
+                                        <Card className="bg-primary/5 border-primary/20">
+                                            <CardContent className="pt-6 text-center space-y-4">
+                                                <div className="text-2xl font-bold text-primary">₹{Number(webinar.price)}</div>
+                                                <p className="text-xs text-muted-foreground">Secure payment via UPI, Card, or Netbanking</p>
+                                            </CardContent>
+                                        </Card>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </DialogContent>
+                </Dialog>
+            </CardFooter>
+        </Card>
+    );
+
     return (
         <div className="min-h-screen bg-background pb-20">
             {/* Header */}
@@ -88,139 +234,39 @@ export default function Webinars() {
                     </div>
                 ) : webinars.length === 0 ? (
                     <div className="text-center py-20 text-muted-foreground">
-                        No upcoming webinars at the moment. Check back later!
+                        No webinars at the moment. Check back later!
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                        {webinars.map((webinar) => (
-                            <Card key={webinar.id} className="flex flex-col hover:shadow-lg transition-shadow border-none shadow-md overflow-hidden">
-                                <div className="relative aspect-video overflow-hidden rounded-t-xl group">
-                                    <img
-                                        src={webinar.thumbnail || "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=600&auto=format&fit=crop"}
-                                        alt={webinar.title}
-                                        className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300"
-                                    />
-                                    <div className="absolute top-2 right-2">
-                                        <Badge variant={webinar.isFree ? "secondary" : "default"}>
-                                            {webinar.isFree ? "Free" : "Paid"}
-                                        </Badge>
-                                    </div>
+                    <div className="space-y-16">
+                        {/* Upcoming Webinars */}
+                        {upcomingWebinars.length > 0 && (
+                            <section>
+                                <div className="flex items-center gap-4 mb-8">
+                                    <h2 className="text-2xl font-bold">Upcoming Webinars</h2>
+                                    <Badge variant="secondary" className="bg-primary/10 text-primary border-none">
+                                        {upcomingWebinars.length} Live/Upcoming
+                                    </Badge>
                                 </div>
-                                <CardHeader>
-                                    <div className="text-xs font-semibold text-primary uppercase tracking-wider mb-1">Live Webinar</div>
-                                    <CardTitle className="line-clamp-2">{webinar.title}</CardTitle>
-                                    <div className="flex items-center gap-2 text-sm text-muted-foreground mt-2">
-                                        <Calendar className="h-4 w-4" /> {formatDate(webinar.scheduledAt)}
-                                    </div>
-                                </CardHeader>
-                                <CardContent className="flex-1">
-                                    {webinar.description && (
-                                        <p className="text-sm text-muted-foreground line-clamp-3 mb-4">
-                                            {webinar.description}
-                                        </p>
-                                    )}
-                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                        <span className="flex items-center gap-1"><Clock className="h-4 w-4" /> {formatTime(webinar.scheduledAt, webinar.duration)}</span>
-                                        <span className="flex items-center gap-1"><Video className="h-4 w-4" /> Online</span>
-                                    </div>
-                                </CardContent>
-                                <CardFooter className="pt-0">
-                                    <Dialog>
-                                        <DialogTrigger asChild>
-                                            <Button className="w-full">
-                                                {webinar.isFree ? "View Details" : "Enroll Now"}
-                                            </Button>
-                                        </DialogTrigger>
-                                        <DialogContent className="max-w-3xl">
-                                            <DialogHeader>
-                                                <DialogTitle>{webinar.title}</DialogTitle>
-                                                <DialogDescription>
-                                                    Scheduled for: {formatDate(webinar.scheduledAt)} • {formatTime(webinar.scheduledAt, webinar.duration)}
-                                                </DialogDescription>
-                                            </DialogHeader>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                    {upcomingWebinars.map(w => renderWebinarCard(w, false))}
+                                </div>
+                            </section>
+                        )}
 
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
-                                                <div className="md:col-span-2 space-y-4">
-                                                    <div className="aspect-video bg-black rounded-lg overflow-hidden shadow-lg relative">
-                                                        <img
-                                                            src={webinar.thumbnail || "https://images.unsplash.com/photo-1485827404703-89b55fcc595e?q=80&w=600&auto=format&fit=crop"}
-                                                            alt={webinar.title}
-                                                            className="w-full h-full object-cover"
-                                                        />
-                                                    </div>
-
-                                                    <div className="space-y-2">
-                                                        <h3 className="font-semibold text-lg">About this Webinar</h3>
-                                                        <p className="text-muted-foreground">{webinar.description || "Join us for this exciting live session where we dive deep into industry topics and share valuable insights."}</p>
-                                                    </div>
-                                                </div>
-
-                                                <div className="space-y-6">
-                                                    <div className="border rounded-lg p-4">
-                                                        <h3 className="font-semibold mb-3 flex items-center gap-2">
-                                                            <Calendar className="h-4 w-4" /> Event Details
-                                                        </h3>
-                                                        <ul className="space-y-3">
-                                                            <li className="flex flex-col text-sm">
-                                                                <span className="font-medium">Date</span>
-                                                                <span className="text-muted-foreground">{formatDate(webinar.scheduledAt)}</span>
-                                                            </li>
-                                                            <li className="flex flex-col text-sm">
-                                                                <span className="font-medium">Time</span>
-                                                                <span className="text-muted-foreground">{formatTime(webinar.scheduledAt, webinar.duration)}</span>
-                                                            </li>
-                                                            <li className="flex flex-col text-sm">
-                                                                <span className="font-medium">Duration</span>
-                                                                <span className="text-muted-foreground">{webinar.duration || 60} minutes</span>
-                                                            </li>
-                                                        </ul>
-                                                    </div>
-
-                                                    <div className="space-y-3">
-                                                        {webinar.googleFormLink ? (
-                                                            <Button className="w-full" asChild>
-                                                                <a href={webinar.googleFormLink} target="_blank" rel="noopener noreferrer">
-                                                                    Register on Google Form
-                                                                </a>
-                                                            </Button>
-                                                        ) : (
-                                                            <Button 
-                                                                className="w-full" 
-                                                                onClick={() => handleRegister(webinar.id)}
-                                                                disabled={registering === webinar.id}
-                                                            >
-                                                                {registering === webinar.id ? (
-                                                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Registering...</>
-                                                                ) : (
-                                                                    "Register for Webinar"
-                                                                )}
-                                                            </Button>
-                                                        )}
-
-                                                        {webinar.meetingUrl && (
-                                                            <Button className="w-full" variant="outline" asChild>
-                                                                <a href={webinar.meetingUrl} target="_blank" rel="noopener noreferrer">
-                                                                    Join Meeting
-                                                                </a>
-                                                            </Button>
-                                                        )}
-
-                                                        {!webinar.isFree && !webinar.googleFormLink && (
-                                                            <Card className="bg-primary/5 border-primary/20">
-                                                                <CardContent className="pt-6 text-center space-y-4">
-                                                                    <div className="text-2xl font-bold text-primary">₹{Number(webinar.price)}</div>
-                                                                    <p className="text-xs text-muted-foreground">Secure payment via UPI, Card, or Netbanking</p>
-                                                                </CardContent>
-                                                            </Card>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </DialogContent>
-                                    </Dialog>
-                                </CardFooter>
-                            </Card>
-                        ))}
+                        {/* Past Webinars */}
+                        {pastWebinars.length > 0 && (
+                            <section>
+                                <div className="flex items-center gap-4 mb-8 border-t pt-12">
+                                    <h2 className="text-2xl font-bold text-muted-foreground">Past Webinars</h2>
+                                    <Badge variant="outline" className="text-muted-foreground">
+                                        {pastWebinars.length} Completed
+                                    </Badge>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                    {pastWebinars.map(w => renderWebinarCard(w, true))}
+                                </div>
+                            </section>
+                        )}
                     </div>
                 )}
             </div>

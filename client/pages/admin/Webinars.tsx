@@ -279,7 +279,8 @@ const WebinarManager = () => {
                                                 <Badge variant="outline" className={cn(
                                                     "text-[9px] font-black uppercase tracking-widest px-2 py-0 h-5 border-none",
                                                     webinar.status === "LIVE" ? "bg-red-50 text-red-600" :
-                                                    webinar.status === "UPCOMING" ? "bg-blue-50 text-blue-600" : "bg-gray-100 text-gray-500"
+                                                    webinar.status === "UPCOMING" ? "bg-blue-50 text-blue-600" : 
+                                                    webinar.status === "COMPLETED" ? "bg-emerald-50 text-emerald-600" : "bg-gray-100 text-gray-500"
                                                 )}>
                                                     {webinar.status}
                                                 </Badge>

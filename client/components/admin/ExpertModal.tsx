@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
-import { User, ShieldCheck, DollarSign, BrainCircuit, Loader2 } from "lucide-react";
+import { User, ShieldCheck, DollarSign, BrainCircuit, Loader2, Calendar } from "lucide-react";
 
 interface ExpertModalProps {
   isOpen: boolean;
@@ -38,6 +38,7 @@ export const ExpertModal = ({
     userId: "",
     specialization: "",
     hourlyRate: "",
+    calendarLink: "",
   });
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -51,12 +52,14 @@ export const ExpertModal = ({
         userId: expert.userId,
         specialization: expert.specialization,
         hourlyRate: expert.hourlyRate.toString(),
+        calendarLink: expert.calendarLink || "",
       });
     } else {
       setFormData({
         userId: "",
         specialization: "",
         hourlyRate: "1500",
+        calendarLink: "",
       });
     }
   }, [expert, isOpen]);
@@ -167,6 +170,21 @@ export const ExpertModal = ({
                 value={formData.hourlyRate}
                 onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
                 required
+                />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="calendarLink" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest pl-1">Google Calendar Link (Optional)</Label>
+            <div className="relative">
+                <Calendar className="absolute left-3.5 top-3.5 h-5 w-5 text-slate-400" />
+                <Input
+                id="calendarLink"
+                type="url"
+                className="h-12 rounded-xl border-slate-200 pl-11"
+                placeholder="https://calendar.google.com/calendar/appointments/schedules/..."
+                value={formData.calendarLink}
+                onChange={(e) => setFormData({ ...formData, calendarLink: e.target.value })}
                 />
             </div>
           </div>

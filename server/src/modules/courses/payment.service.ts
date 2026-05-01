@@ -111,11 +111,20 @@ export class PaymentService {
 
     if (event.type === "payment_intent.succeeded") {
       const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      const { userId, courseId } = paymentIntent.metadata;
+      const { userId, courseId, type, expertId } = paymentIntent.metadata;
 
-      console.log(`[PaymentService] Processing payment_intent.succeeded webhook - userId: ${userId}, courseId: ${courseId}, paymentIntentId: ${paymentIntent.id}`);
+      console.log(`[PaymentService] Processing payment_intent.succeeded webhook - type: ${type || 'COURSE_PURCHASE (legacy)'}`);
 
-      if (userId && courseId) {
+      if (type === "CONSULTANCY_PURCHASE" && userId && expertId) {
+        try {
+          const { ConsultancyService } = require("../consultancy/consultancy.service");
+          await ConsultancyService.fulfillPayment(userId, expertId, paymentIntent.id);
+          console.log(`[PaymentService] ✓ Webhook consultancy fulfillPayment completed`);
+        } catch (fulfillError: any) {
+          console.error(`[PaymentService] ✗ Webhook consultancy fulfillPayment failed:`, fulfillError.message);
+          throw fulfillError;
+        }
+      } else if (userId && courseId) {
         try {
           await this.fulfillOrder(userId, courseId, paymentIntent.id);
           console.log(`[PaymentService] ✓ Webhook fulfillOrder completed`);
@@ -124,7 +133,7 @@ export class PaymentService {
           throw fulfillError;
         }
       } else {
-        console.warn(`[PaymentService] Webhook missing metadata - userId: ${userId}, courseId: ${courseId}`);
+        console.warn(`[PaymentService] Webhook missing metadata - userId: ${userId}, courseId: ${courseId}, expertId: ${expertId}`);
       }
     } else {
       console.log(`[PaymentService] Webhook type not handled: ${event.type}`);

@@ -22,8 +22,10 @@ model User {
   
   profile       Profile?
   enrollments   Enrollment[]
-  registrations WebinarRegistration[]
+  expertAccess   ExpertAccess[]
+  webinarRegistrations WebinarRegistration[]
   bookings      Booking[]
+  gCalBookings  GCalBooking[]
   payments      Payment[]
   
   // Franchise relations
@@ -195,9 +197,17 @@ model Expert {
   specialization String
   rating         Float    @default(0)
   hourlyRate     Float
+  calendarLink   String?
+  
+  googleAccessToken  String?
+  googleRefreshToken String?
+  googleTokenExpiry   DateTime?
+  googleCalendarId    String?
   
   slots          AvailabilitySlot[]
   bookings       Booking[]
+  access         ExpertAccess[]
+  gCalBookings   GCalBooking[]
 }
 
 model AvailabilitySlot {
@@ -220,6 +230,31 @@ model Booking {
   status    String        @default("SCHEDULED")
   paymentId String?
   createdAt DateTime      @default(now())
+}
+
+model ExpertAccess {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expertId  String
+  expert    Expert   @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  status    String   @default("ACTIVE")
+  createdAt DateTime @default(now())
+
+  @@unique([userId, expertId])
+}
+
+model GCalBooking {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expertId    String
+  expert      Expert   @relation(fields: [expertId], references: [id], onDelete: Cascade)
+  scheduledAt DateTime
+  notes       String?
+  googleMeetLink String?
+  status      String   @default("CONFIRMED")
+  createdAt   DateTime @default(now())
 }
 
 // --- Franchise Module ---

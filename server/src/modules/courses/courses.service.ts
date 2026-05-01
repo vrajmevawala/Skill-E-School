@@ -20,7 +20,7 @@ export class CoursesService {
                 },
                 resources: true,
                 _count: {
-                    select: { enrollments: true }
+                    select: { enrollments: true, lessons: true, resources: true }
                 }
             },
         });
@@ -219,7 +219,7 @@ export class CoursesService {
      * Check if user has access to course content
      * Returns course details with lessons and resources if user is enrolled
      */
-    static async checkCourseAccess(userId: string, courseId: string) {
+    static async checkCourseAccess(userId: string, courseId: string, role?: string) {
         try {
             // Get course details
             const course = await prisma.course.findUnique({
@@ -242,9 +242,10 @@ export class CoursesService {
             });
 
             const isEnrolled = !!enrollment;
-            const canAccessContent = isEnrolled && enrollment.status === "COMPLETED";
+            const isAdmin = role === "ADMIN";
+            const canAccessContent = isAdmin || (isEnrolled && enrollment.status === "COMPLETED");
 
-            console.log(`[CoursesService] Access check - User: ${userId}, Course: ${courseId}, Enrolled: ${isEnrolled}, CanAccess: ${canAccessContent}`);
+            console.log(`[CoursesService] Access check - User: ${userId}, Role: ${role}, Course: ${courseId}, Enrolled: ${isEnrolled}, CanAccess: ${canAccessContent}`);
 
             return {
                 courseId,

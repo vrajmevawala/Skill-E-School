@@ -40,7 +40,7 @@ export default function Index() {
         setFeaturedCourses(coursesRes.courses || []);
         if (webinarsRes.webinars && webinarsRes.webinars.length > 0) {
           // Find the soonest upcoming webinar
-          const upcoming = webinarsRes.webinars.filter((w: any) => new Date(w.date) > new Date());
+          const upcoming = webinarsRes.webinars.filter((w: any) => w.status !== "COMPLETED");
           setHighlightWebinar(upcoming[0] || webinarsRes.webinars[0]);
         }
       } catch (err) {
@@ -153,8 +153,8 @@ export default function Index() {
                       <div>
                         <p className="font-semibold">Live Webinar: {highlightWebinar.title}</p>
                         <p className="text-sm text-white/80">
-                          {new Date(highlightWebinar.date) > new Date()
-                            ? `Scheduled for ${new Date(highlightWebinar.date).toLocaleDateString()}`
+                          {highlightWebinar.status !== "COMPLETED"
+                            ? `Scheduled for ${new Date(highlightWebinar.scheduledAt).toLocaleDateString()}`
                             : "Available on-demand"}
                         </p>
                       </div>

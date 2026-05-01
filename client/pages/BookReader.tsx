@@ -25,12 +25,12 @@ export default function BookReader() {
                     bookService.checkAccess(id)
                 ]);
 
-                if (bookRes.status === "success") {
-                    setBook(bookRes.data.book);
+                if (bookRes && bookRes.book) {
+                    setBook(bookRes.book);
                 }
 
-                if (accessRes.status === "success") {
-                    setHasAccess(accessRes.data.hasAccess);
+                if (accessRes && accessRes.hasAccess !== undefined) {
+                    setHasAccess(accessRes.hasAccess);
                 }
             } catch (err) {
                 console.error("Failed to load book reader", err);

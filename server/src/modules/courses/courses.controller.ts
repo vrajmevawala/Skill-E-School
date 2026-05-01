@@ -60,9 +60,9 @@ export class CoursesController {
 
     static async checkCourseAccess(req: Request, res: Response, next: NextFunction) {
         try {
-            const userId = (req as any).user.id;
+            const user = (req as any).user;
             const courseId = req.params.id;
-            const access = await CoursesService.checkCourseAccess(userId, courseId);
+            const access = await CoursesService.checkCourseAccess(user.id, courseId, user.role);
             return APIResponse.success(res, access);
         } catch (error) {
             next(error);

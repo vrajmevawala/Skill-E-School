@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     Plus,
     Search,
@@ -52,10 +53,12 @@ interface CourseRecord {
     _count?: {
         lessons: number;
         enrollments: number;
+        resources: number;
     };
 }
 
 const AdminCourses = () => {
+    const navigate = useNavigate();
     const [courses, setCourses] = useState<CourseRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState("");
@@ -293,7 +296,7 @@ const AdminCourses = () => {
                                                 </div>
                                                 <div className="flex items-center gap-1.5 tooltip" title="Resources">
                                                     <FileText className="h-3.5 w-3.5" />
-                                                    <span className="text-xs font-bold">0</span>
+                                                    <span className="text-xs font-bold">{course._count?.resources || 0}</span>
                                                 </div>
                                             </div>
                                         </TableCell>
@@ -306,7 +309,7 @@ const AdminCourses = () => {
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="w-48 rounded-xl border-gray-200">
                                                     <DropdownMenuLabel className="text-[10px] font-black uppercase text-gray-400 tracking-widest p-3">Management</DropdownMenuLabel>
-                                                    <DropdownMenuItem className="p-3 gap-3 cursor-pointer" onClick={() => alert("Viewing course...")}>
+                                                    <DropdownMenuItem className="p-3 gap-3 cursor-pointer" onClick={() => navigate(`/courses/${course.id}`)}>
                                                         <Eye className="h-4 w-4 text-gray-400" />
                                                         <span className="text-sm font-medium">View Public</span>
                                                     </DropdownMenuItem>

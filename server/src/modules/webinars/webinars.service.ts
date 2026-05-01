@@ -3,9 +3,47 @@ import { AppError } from "../../utils/app-error";
 
 export class WebinarsService {
     static async getAllWebinars() {
-        return prisma.webinar.findMany({
-            orderBy: { scheduledAt: "asc" },
+        const webinars = await prisma.webinar.findMany({
+            orderBy: { scheduledAt: "desc" },
+            include: {
+                _count: {
+                    select: { registrations: true }
+                }
+            }
         });
+
+        const now = new Date();
+        
+        // Update statuses in parallel for efficiency
+        const updatedWebinars = await Promise.all(webinars.map(async (webinar) => {
+            const scheduledTime = new Date(webinar.scheduledAt);
+            const duration = webinar.duration || 60; // default 60 mins
+            const endTime = new Date(scheduledTime.getTime() + duration * 60000);
+
+            let newStatus = webinar.status;
+            if (now > endTime) {
+                newStatus = "COMPLETED";
+            } else if (now >= scheduledTime && now <= endTime) {
+                newStatus = "LIVE";
+            } else {
+                newStatus = "UPCOMING";
+            }
+
+            if (newStatus !== webinar.status) {
+                return prisma.webinar.update({
+                    where: { id: webinar.id },
+                    data: { status: newStatus },
+                    include: {
+                        _count: {
+                            select: { registrations: true }
+                        }
+                    }
+                });
+            }
+            return webinar;
+        }));
+
+        return updatedWebinars;
     }
 
     static async register(webinarId: string, userId: string) {

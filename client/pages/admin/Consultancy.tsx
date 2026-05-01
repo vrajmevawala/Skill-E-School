@@ -71,7 +71,7 @@ const AdminConsultancy = () => {
     const fetchExperts = async () => {
         setLoading(true);
         try {
-            const res = await consultancyService.getExperts();
+            const res = await consultancyService.getAdminExperts();
             setExperts(res.experts || []);
         } catch (err) {
             console.error(err);
